@@ -1,0 +1,2277 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Quiz TMA — Multi-thématiques</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+:root{
+  --bg: #0b1220;
+  --panel: #121b2e;
+  --panel-2: #17233b;
+  --line: #24304a;
+  --text: #e8edf5;
+  --muted: #8a9ab3;
+  --accent: #4fd1c5;
+  --accent-dim: #234a48;
+  --excellent: #00b050;
+  --bon: #a9d18e;
+  --moyen: #ffc000;
+  --faible: #ff5050;
+  --mauvais: #ff0000;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background: radial-gradient(1200px 800px at 80% -10%, #142035 0%, var(--bg) 60%);
+  color: var(--text);
+  font-family: 'IBM Plex Sans', sans-serif;
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  padding: 32px 16px;
+}
+.wrap{ width:100%; max-width:720px; }
+
+.blueprint{
+  position:relative;
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:
+    linear-gradient(var(--panel), var(--panel)) padding-box,
+    repeating-linear-gradient(0deg, transparent, transparent 27px, rgba(79,209,197,0.035) 28px) padding-box;
+  overflow:hidden;
+}
+.blueprint::before{
+  content:"";
+  position:absolute; inset:0;
+  background-image:
+    linear-gradient(rgba(79,209,197,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(79,209,197,0.05) 1px, transparent 1px);
+  background-size: 24px 24px;
+  pointer-events:none;
+}
+
+header.top{
+  display:flex; align-items:center; gap:12px;
+  padding: 18px 24px;
+  border-bottom:1px solid var(--line);
+  position:relative; z-index:1;
+}
+.tag{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:11px;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  border:1px solid var(--accent-dim);
+  background: rgba(79,209,197,0.08);
+  padding:4px 8px;
+  border-radius:6px;
+}
+header.top h1{
+  font-family:'Space Grotesk', sans-serif;
+  font-size:16px;
+  margin:0;
+  color:var(--text);
+  font-weight:600;
+}
+header.top .sub{
+  margin-left:auto;
+  font-family:'IBM Plex Mono', monospace;
+  font-size:12px;
+  color:var(--muted);
+}
+
+.stage{ position:relative; z-index:1; padding: 28px 24px 32px; }
+
+/* --- START SCREEN --- */
+.hero-title{
+  font-family:'Space Grotesk', sans-serif;
+  font-size: 28px;
+  line-height:1.25;
+  margin: 4px 0 10px;
+}
+.hero-title span{ color:var(--accent); }
+.hero-desc{ color: var(--muted); font-size:14.5px; line-height:1.6; margin-bottom:26px; }
+
+.field-label{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:11px;
+  color:var(--muted);
+  letter-spacing:0.06em;
+  text-transform:uppercase;
+  margin-bottom:8px;
+  display:block;
+}
+select, input[type=text]{
+  width:100%;
+  background: var(--panel-2);
+  border:1px solid var(--line);
+  color:var(--text);
+  font-size:15px;
+  font-family:'IBM Plex Sans', sans-serif;
+  padding:12px 14px;
+  border-radius:8px;
+  outline:none;
+  margin-bottom:20px;
+}
+select:focus, input[type=text]:focus{ border-color: var(--accent); }
+
+.scope-list{
+  display:grid; grid-template-columns: repeat(2,1fr); gap:8px;
+  margin-bottom:26px;
+}
+.scope-item{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:11.5px;
+  color:var(--muted);
+  border:1px solid var(--line);
+  border-radius:6px;
+  padding:8px 10px;
+  background: rgba(255,255,255,0.015);
+}
+.scope-item b{ color:var(--text); font-weight:500; }
+
+button.primary{
+  background: var(--accent);
+  color:#06231f;
+  border:none;
+  font-family:'Space Grotesk', sans-serif;
+  font-weight:600;
+  font-size:15px;
+  padding:13px 22px;
+  border-radius:9px;
+  cursor:pointer;
+  transition: transform .12s ease, box-shadow .12s ease;
+  box-shadow: 0 0 0 rgba(79,209,197,0);
+}
+button.primary:hover{ transform: translateY(-1px); box-shadow: 0 6px 18px rgba(79,209,197,0.18); }
+button.primary:disabled{ opacity:0.4; cursor:not-allowed; transform:none; box-shadow:none; }
+
+button.secondary{
+  background:transparent;
+  border:1px solid var(--line);
+  color:var(--text);
+  font-family:'IBM Plex Sans', sans-serif;
+  font-size:14px;
+  padding:11px 18px;
+  border-radius:9px;
+  cursor:pointer;
+}
+button.secondary:hover{ border-color:var(--accent); color:var(--accent); }
+
+/* --- QUIZ SCREEN --- */
+.progress-row{ display:flex; align-items:center; gap:12px; margin-bottom:22px; }
+.progress-track{
+  flex:1; height:6px; background:var(--panel-2); border-radius:4px; overflow:hidden;
+  border:1px solid var(--line);
+}
+.progress-fill{ height:100%; background: var(--accent); width:0%; transition: width .35s ease; }
+.progress-count{ font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--muted); white-space:nowrap; }
+
+.qmeta{ font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--accent); margin-bottom:8px; letter-spacing:0.05em; }
+.qtext{ font-family:'Space Grotesk', sans-serif; font-size:19px; line-height:1.4; margin: 0 0 20px; }
+
+.options{ display:flex; flex-direction:column; gap:10px; margin-bottom:22px; }
+.opt{
+  display:flex; align-items:center; gap:12px;
+  border:1px solid var(--line);
+  background: var(--panel-2);
+  border-radius:9px;
+  padding:13px 14px;
+  cursor:pointer;
+  font-size:14.5px;
+  transition: border-color .12s ease, background .12s ease;
+}
+.opt:hover{ border-color:var(--accent); }
+.opt .dot{
+  width:18px;height:18px;border-radius:50%;
+  border:2px solid var(--muted);
+  flex-shrink:0;
+  position:relative;
+}
+.opt.selected{ border-color:var(--accent); background: rgba(79,209,197,0.08); }
+.opt.selected .dot{ border-color:var(--accent); }
+.opt.selected .dot::after{
+  content:""; position:absolute; inset:3px; border-radius:50%; background:var(--accent);
+}
+.opt.correct{ border-color: var(--excellent); background: rgba(0,176,80,0.1); }
+.opt.correct .dot{ border-color: var(--excellent); }
+.opt.correct .dot::after{ content:""; position:absolute; inset:3px; border-radius:50%; background:var(--excellent); }
+.opt.incorrect{ border-color: var(--mauvais); background: rgba(255,0,0,0.08); }
+.opt.incorrect .dot{ border-color: var(--mauvais); }
+.opt.incorrect .dot::after{ content:""; position:absolute; inset:3px; border-radius:50%; background:var(--mauvais); }
+.opt.disabled{ cursor:default; }
+
+.feedback{
+  font-size:13.5px; line-height:1.55; color:var(--muted);
+  border-left:3px solid var(--accent);
+  padding: 10px 14px;
+  background: var(--panel-2);
+  border-radius: 0 8px 8px 0;
+  margin-bottom:22px;
+  display:none;
+}
+.feedback.show{ display:block; }
+.feedback b{ color:var(--text); }
+
+.nav-row{ display:flex; justify-content:space-between; align-items:center; }
+
+/* --- RESULT SCREEN --- */
+.result-badge{
+  display:inline-flex; align-items:center; gap:10px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-family:'Space Grotesk', sans-serif;
+  font-weight:700; font-size:16px;
+  margin-bottom: 18px;
+}
+.score-big{
+  font-family:'Space Grotesk', sans-serif;
+  font-size: 46px;
+  font-weight:700;
+  line-height:1;
+  margin-bottom: 4px;
+}
+.score-sub{ color:var(--muted); font-size:13.5px; margin-bottom:24px; }
+
+.scale-row{ display:flex; gap:6px; margin-bottom:26px; }
+.scale-chip{
+  flex:1; text-align:center; font-family:'IBM Plex Mono', monospace;
+  font-size:10px; padding:7px 2px; border-radius:6px; color:#0b1220; font-weight:600;
+  opacity:0.35;
+}
+.scale-chip.active{ opacity:1; box-shadow: 0 0 0 2px var(--panel), 0 0 0 3px currentColor; }
+
+.summary-box{
+  background: var(--panel-2);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:16px 18px;
+  font-family:'IBM Plex Mono', monospace;
+  font-size:12.5px;
+  color: var(--text);
+  line-height:1.7;
+  white-space:pre-wrap;
+  margin-bottom:16px;
+}
+.summary-box .k{ color:var(--muted); }
+
+.review-list{ margin-top: 28px; }
+.review-item{
+  border-top:1px solid var(--line);
+  padding: 14px 0;
+  font-size: 13.5px;
+}
+.review-item .q{ color: var(--text); margin-bottom:6px; font-weight:500; }
+.review-item .a{ color: var(--muted); font-size:12.5px; }
+.review-item .a b{ color: var(--excellent); }
+.review-item.wrong .a b{ color: var(--mauvais); }
+.review-item .badge-mini{
+  display:inline-block; font-family:'IBM Plex Mono', monospace; font-size:10px;
+  padding:2px 6px; border-radius:4px; margin-right:8px;
+}
+.badge-mini.ok{ background: rgba(0,176,80,0.15); color:var(--excellent); }
+.badge-mini.ko{ background: rgba(255,0,0,0.15); color:var(--mauvais); }
+
+.copied-flag{ font-size:12px; color:var(--accent); margin-left:10px; font-family:'IBM Plex Mono', monospace; opacity:0; transition:opacity .2s; }
+.copied-flag.show{ opacity:1; }
+
+footer.note{
+  text-align:center; color:var(--muted); font-size:11.5px; margin-top:18px;
+  font-family:'IBM Plex Mono', monospace;
+}
+.hidden{ display:none !important; }
+:root{ box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px); }
+.team-wrap{ overflow-x:auto; margin-bottom:18px; }
+.team-table{ width:100%; border-collapse:collapse; min-width:520px; }
+.team-table th{ text-align:left; font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--muted); text-transform:uppercase; padding:8px 10px; border-bottom:1px solid var(--line); }
+.team-table td{ padding:10px; border-bottom:1px solid var(--line); font-size:13px; }
+.lvl-pill{ display:inline-block; padding:3px 9px; border-radius:999px; font-weight:600; font-size:12px; }
+.save-status{ font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--muted); margin-bottom:16px; }
+
+/* --- THEME SELECT SCREEN --- */
+.theme-grid{ display:flex; flex-direction:column; gap:10px; margin-bottom:24px; }
+.theme-card{
+  display:flex; align-items:center; gap:14px;
+  border:1px solid var(--line);
+  background: var(--panel-2);
+  border-radius:10px;
+  padding:16px 16px;
+  cursor:pointer;
+  transition: border-color .12s ease, transform .12s ease;
+}
+.theme-card:hover{ border-color: var(--accent); transform: translateY(-1px); }
+.theme-card .tc-main{ flex:1; }
+.theme-card .tc-name{ font-family:'Space Grotesk', sans-serif; font-weight:600; font-size:16px; margin-bottom:3px; }
+.theme-card .tc-desc{ font-size:12.5px; color:var(--muted); }
+.theme-card .tc-status{
+  font-family:'IBM Plex Mono', monospace; font-size:11px; padding:5px 10px; border-radius:999px;
+  white-space:nowrap;
+}
+.tc-status.todo{ color:var(--muted); border:1px solid var(--line); }
+.tc-status.done{ font-weight:600; }
+.theme-card .tc-arrow{ color:var(--muted); font-size:18px; }
+
+.session-actions{ display:flex; gap:10px; justify-content:space-between; align-items:center; margin-top:8px; }
+
+/* --- FINAL SUMMARY SCREEN --- */
+.final-table{ width:100%; border-collapse:collapse; margin-bottom:22px; }
+.final-table th{
+  text-align:left; font-family:'IBM Plex Mono', monospace; font-size:10.5px; color:var(--muted);
+  text-transform:uppercase; letter-spacing:0.05em; padding:8px 10px; border-bottom:1px solid var(--line);
+}
+.final-table td{ padding:12px 10px; border-bottom:1px solid var(--line); font-size:14px; }
+.final-table td.theme-name{ font-family:'Space Grotesk', sans-serif; font-weight:600; }
+.final-table td.level-cell{ font-weight:600; }
+.final-table tr:last-child td{ border-bottom:none; }
+
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="blueprint">
+    <header class="top">
+      <span class="tag">TMA · MATRICE DE COMPÉTENCES</span>
+      <h1>Quiz de connaissances</h1>
+      <span class="sub" id="headerRight">MULTI-THÉMATIQUES</span>
+    </header>
+
+    <div class="stage">
+
+      <!-- START SCREEN -->
+      <section id="screen-start">
+        <div class="hero-title">Quiz <span>TMA</span><br>Suivi des connaissances</div>
+        <div class="hero-desc">
+          Choisissez le consultant, puis enchaînez les thématiques disponibles (TMS, UNIFY, EDI, ORBI2…). Chaque thématique tire 10 questions aléatoirement parmi sa banque de 30.
+          À la fin de la session, un récapitulatif regroupe le niveau obtenu sur chaque thématique traitée, prêt à être reporté dans <b>Matrice_de_competences.xlsx</b>.
+        </div>
+
+        <label class="field-label" for="consultant">Consultant</label>
+        <select id="consultant">
+          <option value="">— Sélectionner —</option>
+          <option value="Arslan M'MADI">Arslan M'MADI</option>
+          <option value="Sebastien GUIOL">Sebastien GUIOL</option>
+          <option value="AL Mehdi Saffer">AL Mehdi Saffer</option>
+          <option value="__autre__">Autre…</option>
+        </select>
+        <input type="text" id="consultantOther" placeholder="Nom du consultant" style="display:none;">
+
+        <div style="display:flex;gap:10px;flex-wrap:wrap;"><button class="primary" id="startBtn" disabled>Continuer →</button><button class="secondary" id="teamBtn">Résultats de l'équipe</button></div>
+      </section>
+
+      <!-- THEME SELECT SCREEN -->
+      <section id="screen-themes" class="hidden">
+        <div class="hero-title" style="font-size:22px;">Choisir une thématique</div>
+        <div class="hero-desc" id="themesSub"></div>
+
+        <div class="theme-grid" id="themeGrid"></div>
+
+        <div class="session-actions">
+          <button class="secondary" id="finalSummaryBtn" disabled>Voir le récapitulatif final</button>
+        </div>
+      </section>
+
+      <!-- TEAM SCREEN -->
+      <section id="screen-team" class="hidden">
+        <div class="hero-title" style="font-size:22px;">Résultats de l'équipe</div>
+        <div class="hero-desc" id="teamSub">Dernier niveau obtenu par consultant et par thématique.</div>
+        <div class="team-wrap"><table class="team-table"><thead id="teamHead"></thead><tbody id="teamBody"></tbody></table></div>
+        <label class="field-label">Historique des passages</label>
+        <div class="team-wrap"><table class="team-table"><thead id="histHead"></thead><tbody id="histBody"></tbody></table></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="secondary" id="teamBackBtn">← Retour</button>
+          <button class="secondary" id="teamRefreshBtn">Actualiser</button>
+          <button class="primary" id="teamCsvBtn">↓ Exporter en CSV</button>
+        </div>
+      </section>
+
+      <!-- QUIZ SCREEN -->
+      <section id="screen-quiz" class="hidden">
+        <div class="progress-row">
+          <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+          <div class="progress-count" id="progressCount">Q1/20</div>
+        </div>
+        <div class="qmeta" id="qmeta">…</div>
+        <div class="qtext" id="qtext"></div>
+        <div class="options" id="options"></div>
+        <div class="feedback" id="feedback"></div>
+        <div class="nav-row">
+          <span style="font-size:12px;color:var(--muted);" id="scoreLive">Score : 0/0</span>
+          <button class="primary" id="nextBtn" disabled>Valider</button>
+        </div>
+      </section>
+
+      <!-- THEME RESULT SCREEN -->
+      <section id="screen-theme-result" class="hidden">
+        <div id="resultBadgeWrap"></div>
+        <div class="score-big" id="scoreBig"></div>
+        <div class="score-sub" id="scoreSub"></div>
+
+        <div class="scale-row" id="scaleRow"></div>
+
+        <div class="session-actions">
+          <button class="secondary" id="backToThemesBtn">← Autre thématique</button>
+          <button class="primary" id="goFinalBtn">Récapitulatif final →</button>
+        </div>
+
+        <div class="review-list" id="reviewList"></div>
+      </section>
+
+      <!-- FINAL SUMMARY SCREEN -->
+      <section id="screen-final" class="hidden">
+        <div class="hero-title" style="font-size:22px;">Récapitulatif de session</div>
+        <div class="hero-desc" id="finalSub"></div>
+        <div class="save-status" id="saveStatus"></div>
+
+        <table class="final-table" id="finalTable">
+          <thead><tr><th>Thématique</th><th>Score</th><th>Niveau</th></tr></thead>
+          <tbody id="finalTableBody"></tbody>
+        </table>
+
+        <label class="field-label">Résumé à transmettre à Claude</label>
+        <div class="summary-box" id="summaryBox"></div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+          <button class="secondary" id="copyBtn">Copier le résultat</button>
+          <button class="primary" id="pdfBtn">↓ Télécharger le compte-rendu PDF</button>
+          <span class="copied-flag" id="copiedFlag">Copié ✓</span>
+        </div>
+
+        <div class="session-actions" style="margin-top:20px;">
+          <button class="secondary" id="continueSessionBtn">← Continuer la session</button>
+        </div>
+
+        <footer class="note">Ce résultat n'est pas enregistré automatiquement dans le fichier Excel — collez-le dans la conversation pour que la matrice soit mise à jour.</footer>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<script>
+const TMS_POOL = [
+{
+  meta:"CONTEXTE PROJET",
+  q:"Quelle interface est décrite dans l'ensemble de ces documents ?",
+  options:[
+    "Une interface avec un CRM",
+    "Une interface avec le TMS (Transport Management System)",
+    "Une interface EDI avec les fournisseurs",
+    "Une interface avec l'outil OOBM"
+  ],
+  correct:1,
+  explain:"L'ensemble du corpus documentaire décrit la conception technique de l'interface avec le TMS de Robertet."
+},
+{
+  meta:"VARIABLES DE CONTEXTE",
+  q:"Où sont stockées les variables de configuration utilisées par les jobs du projet ?",
+  options:[
+    "Dans la base ERP",
+    "Dans des fichiers properties, sur le même disque que le moteur d'exécution",
+    "Dans des variables d'environnement du serveur",
+    "Dans un fichier XML de configuration global"
+  ],
+  correct:1,
+  explain:"Toutes les variables sont stockées dans des fichiers properties, qui doivent être sur le même disque que le moteur d'exécution."
+},
+{
+  meta:"TOKEN & SÉCURITÉ",
+  q:"Quel est le rôle du mécanisme de gestion du token TMS ?",
+  options:[
+    "Envoyer les traces vers un fichier",
+    "Gérer le token d'authentification à l'API TMS : écriture du token, vérification de disponibilité et d'expiration",
+    "Charger les variables de contexte depuis les fichiers properties",
+    "Formater une réponse d'erreur REST"
+  ],
+  correct:1,
+  explain:"Ce mécanisme écrit le token, vérifie s'il existe déjà et s'il est expiré, à partir des variables de type client_id, client_secret, grant_type, access_token_url, max_token_delay."
+},
+{
+  meta:"TRACES & ERREURS",
+  q:"Quelle est la différence entre la gestion des erreurs et la gestion des traces du projet ?",
+  options:[
+    "Elles sont strictement identiques et interchangeables",
+    "La gestion des erreurs traite uniquement les erreurs (« E »), la gestion des traces traite uniquement les traces (« V »)",
+    "La gestion des erreurs traite les traces, la gestion des traces traite les erreurs",
+    "L'une est utilisée en production, l'autre uniquement en test"
+  ],
+  correct:1,
+  explain:"Seules les erreurs sont gérées dans le mécanisme de type « E » ; les traces sont gérées séparément dans un mécanisme dédié marqué « V »."
+},
+{
+  meta:"QUEUES",
+  q:"Quelle queue reçoit les messages « Order » avant leur envoi vers l'API TMS ?",
+  options:["TRA.ORDER.A.INTERNAL.Q.P","TRA.ORDER.O.INTERNAL.Q.P","TRA.ORDER.P.INTERNAL.Q.R","TRA.DELIVERY.O.INTERNAL.Q.P"],
+  correct:1,
+  explain:"Le job de réception REST pousse le message dans TRA.ORDER.O.INTERNAL.Q.P, lue ensuite par le job d'envoi vers TMS."
+},
+{
+  meta:"QUEUES",
+  q:"Dans la convention de nommage des queues du projet, que signifie le suffixe « .Q.R » ?",
+  options:[
+    "C'est la queue principale de production",
+    "C'est une queue de recyclage, où sont renvoyés les messages en erreur pour retraitement",
+    "C'est une queue de test uniquement",
+    "C'est une queue réservée aux notifications"
+  ],
+  correct:1,
+  explain:"Les queues suffixées « .Q.R » (Recycled) reçoivent les messages en erreur pour permettre un retraitement ultérieur."
+},
+{
+  meta:"GESTION D'ERREUR",
+  q:"Que se passe-t-il quand l'API TMS répond en erreur suite à l'envoi d'un message ?",
+  options:[
+    "Le message est perdu définitivement",
+    "Une trace d'erreur est générée (code + message) et le message source est renvoyé dans la queue de recyclage",
+    "Le job s'arrête définitivement et doit être relancé manuellement",
+    "Le message est automatiquement renvoyé sans trace"
+  ],
+  correct:1,
+  explain:"En cas de réponse d'erreur : une trace erreur est générée avec le code et le message d'erreur, et le message source est repoussé vers la queue de recyclage."
+},
+{
+  meta:"ERP · ACK",
+  q:"À quoi sert le job qui met à jour la table « order-log » (technique : LO102PF) ?",
+  options:[
+    "Envoyer les commandes vers TMS",
+    "Mettre à jour l'ERP à réception d'un ACK TMS pour une commande",
+    "Générer le token d'authentification TMS",
+    "Recycler les messages en échec vers la queue principale"
+  ],
+  correct:1,
+  explain:"Ce job met à jour la table order-log (LO102PF) de l'ERP dès qu'un ACK est présent dans la queue ACK correspondante."
+},
+{
+  meta:"ERP · CONTRÔLE",
+  q:"Avant de mettre à jour une table de log ERP, quel contrôle est systématiquement réalisé sur l'InternalId ?",
+  options:[
+    "Compter le nombre de messages restants dans la queue",
+    "Vérifier l'existence et l'unicité de l'InternalId dans la base ERP",
+    "Compter le nombre de tentatives de reconnexion à l'ERP",
+    "Vérifier le nombre de tokens générés dans la journée"
+  ],
+  correct:1,
+  explain:"L'existence et l'unicité de l'InternalId sont testées ; le résultat est stocké dans une variable « NbRows »."
+},
+{
+  meta:"NOTIFICATIONS",
+  q:"Que vérifie le job de réception des notifications avant d'accepter un message JSON ?",
+  options:[
+    "Que la référence transport n'est pas nulle et que l'objet concerné est bien « transport »",
+    "Que le token TMS est encore valide",
+    "Que la queue cible n'est pas pleine",
+    "Que l'utilisateur REST est authentifié par certificat"
+  ],
+  correct:0,
+  explain:"Un contrôle vérifie que la référence n'est pas nulle et que l'objet est bien de type « transport » ; sinon une erreur 500 est renvoyée."
+},
+{
+  meta:"TRANSPORT",
+  q:"Comment le job en charge du transport récupère-t-il les informations depuis TMS ?",
+  options:[
+    "Il envoie un message Transport vers TMS",
+    "Il interroge (GET) l'API TMS pour récupérer les informations transport à partir de la référence reçue",
+    "Il écrit un fichier JSON sur le SFTP",
+    "Il envoie un e-mail d'alerte en cas d'erreur"
+  ],
+  correct:1,
+  explain:"Ce job lit la queue de notification et interroge l'API TMS en GET avec la référence transport."
+},
+{
+  meta:"TRANSPORT · ERP",
+  q:"Où sont écrites les informations transport une fois récupérées de TMS ?",
+  options:[
+    "Insertion dans une table ERP dédiée et écriture d'un fichier JSON sur un serveur SFTP",
+    "Envoi direct du fichier JSON à l'API TMS",
+    "Génération du token d'authentification pour les autres jobs",
+    "Notification de l'ERP par e-mail pour chaque transport"
+  ],
+  correct:0,
+  explain:"Une ligne est insérée dans la table transport log de l'ERP (BusinessID, Status, Environnement) puis le fichier JSON est écrit en local et sur le SFTP."
+},
+{
+  meta:"ERP · TABLES TECHNIQUES",
+  q:"Quelle table technique ERP correspond aux ACK du flux « packing » ?",
+  options:["LO102PF","LO104PF","LO106PF","LO108PF"],
+  correct:1,
+  explain:"La table technique LO104PF correspond au log « packing »."
+},
+{
+  meta:"ERP · TABLES TECHNIQUES",
+  q:"Quelle table technique ERP correspond aux ACK du flux « event » ?",
+  options:["LO102PF","LO104PF","LO106PF","LO108PF"],
+  correct:2,
+  explain:"La table technique LO106PF correspond au log « event »."
+},
+{
+  meta:"ERP · TABLES TECHNIQUES",
+  q:"Quelle table technique ERP correspond aux ACK du flux « document » ?",
+  options:["LO103PF","LO104PF","LO106PF","LO108PF"],
+  correct:3,
+  explain:"La table technique LO108PF correspond au log « document »."
+},
+{
+  meta:"ERP · TABLES TECHNIQUES",
+  q:"Quelle table technique ERP correspond aux ACK du flux « delivery » ?",
+  options:["LO102PF","LO103PF","LO105PF","LO106PF"],
+  correct:1,
+  explain:"La table technique LO103PF correspond au log « delivery »."
+},
+{
+  meta:"GESTION D'ERREUR",
+  q:"À quoi sert le mécanisme de transcodification des codes d'erreur (fichier de transco) ?",
+  options:[
+    "Convertir les codes d'erreur HTTP en codes internes ERP",
+    "Associer un libellé compréhensible à un code d'erreur TMS qui n'a pas de libellé natif",
+    "Chiffrer les codes d'erreur avant envoi par mail",
+    "Compter le nombre d'erreurs par jour"
+  ],
+  correct:1,
+  explain:"Si TMS renvoie un code d'erreur sans libellé, le fichier de transcodification (variable de contexte dédiée) permet d'associer un libellé personnalisé au code."
+},
+{
+  meta:"TOKEN & SÉCURITÉ",
+  q:"Quel problème de concurrence a été corrigé en ajoutant le nom du job au chemin du fichier de token ?",
+  options:[
+    "Un problème de sécurité du mot de passe client",
+    "Le fichier de token était partagé entre jobs, provoquant des accès concurrents ; désormais chaque job a son propre fichier",
+    "Une expiration trop rapide du token",
+    "Un mauvais format du token retourné par TMS"
+  ],
+  correct:1,
+  explain:"Le nom du job a été ajouté au chemin du fichier de token afin que chaque job dispose de son propre fichier, non partagé avec les autres."
+},
+{
+  meta:"MAIL D'ALERTE",
+  q:"Quels sont les 3 paramètres transmis dans le header de l'API d'envoi de mail d'erreur ?",
+  options:[
+    "Login, mot de passe, adresse IP",
+    "Un mot de passe d'authentification, le sujet du mail et le destinataire",
+    "Token, sujet, pièce jointe",
+    "Expéditeur, destinataire, niveau de priorité"
+  ],
+  correct:1,
+  explain:"L'API récupère 3 paramètres dans le header : un mot de passe d'authentification, le sujet du mail et le destinataire. Le corps du mail est transmis dans le body de la requête."
+},
+{
+  meta:"MAIL D'ALERTE",
+  q:"Que se passe-t-il si le mot de passe transmis à l'API d'envoi de mail est invalide ?",
+  options:[
+    "Le mail est envoyé quand même avec un avertissement",
+    "Une réponse « Wrong authentication » est renvoyée, le mail n'est pas envoyé",
+    "Le job plante et doit être relancé",
+    "Un nouveau mot de passe est généré automatiquement"
+  ],
+  correct:1,
+  explain:"Le mot de passe est vérifié : s'il est correct, le mail est envoyé ; sinon une réponse « Wrong authentication » est renvoyée."
+},
+{
+  meta:"MAIL D'ALERTE",
+  q:"Pourquoi les erreurs provenant du composant d'appel REST vers TMS sont-elles exclues de l'envoi automatique de mail ?",
+  options:[
+    "Pour des raisons de coût d'envoi de mail",
+    "Pour éviter une boucle infinie avec le mécanisme de capture de logs",
+    "Parce que ces erreurs ne sont jamais critiques",
+    "Parce que TMS envoie déjà un mail dans ce cas"
+  ],
+  correct:1,
+  explain:"Une condition élimine les erreurs venant du composant d'appel REST, car cela génèrerait une boucle infinie avec le mécanisme de capture des logs."
+},
+{
+  meta:"MAIL D'ALERTE",
+  q:"Sur quel flux métier l'envoi de mail automatique en cas d'erreur est-il actuellement limité ?",
+  options:["Order","Delivery","Transport","Packing"],
+  correct:2,
+  explain:"Une condition filtre uniquement sur le flux Transport, l'envoi de mail étant jugé nécessaire pour ce cas pour le moment."
+},
+{
+  meta:"QUEUES",
+  q:"Quel est le rôle générique d'un job de recyclage de queue (paramétré par une queue source et une queue cible) ?",
+  options:[
+    "Supprimer les messages en erreur définitivement",
+    "Dépiler les messages d'une queue source et les repousser dans une queue cible, pour permettre leur retraitement",
+    "Dupliquer tous les messages entre deux environnements",
+    "Chiffrer les messages avant stockage"
+  ],
+  correct:1,
+  explain:"Ce type de job dépile les messages de la queue « From » et les renvoie vers la queue « To », en générant une trace de confirmation."
+},
+{
+  meta:"GESTION D'ERREUR",
+  q:"Que renvoie le mécanisme de réponse d'erreur générique en cas de problème technique sur un appel REST entrant ?",
+  options:[
+    "Une erreur 404 avec un message générique",
+    "Une erreur 500 avec InternalID, BusinessId et Sender",
+    "Une erreur 401 avec le token expiré",
+    "Aucune réponse, la connexion est simplement coupée"
+  ],
+  correct:1,
+  explain:"Le mécanisme de réponse d'erreur commun renvoie une erreur 500 contenant l'InternalID, le BusinessId et le Sender, selon la spécification."
+},
+{
+  meta:"VARIABLES DE CONTEXTE",
+  q:"À quel usage correspondent les variables ERP_login, ERP_password, ERP_server, ERP_database ?",
+  options:[
+    "La connexion à l'API TMS",
+    "La connexion à la base de données ERP",
+    "La connexion au bus de messages",
+    "La configuration du serveur de mail"
+  ],
+  correct:1,
+  explain:"Ce groupe de variables sert exclusivement à établir la connexion à la base de données ERP."
+},
+{
+  meta:"VARIABLES DE CONTEXTE",
+  q:"À quel usage correspondent les variables ActiveMQ_uri, ActiveMQ_host1, ActiveMQ_host2, ActiveMQ_port ?",
+  options:[
+    "La connexion à l'ERP",
+    "La connexion au bus de messages (ActiveMQ / JMS)",
+    "La connexion à l'API TMS",
+    "La configuration des traces"
+  ],
+  correct:1,
+  explain:"Ces variables configurent la connexion au bus de messages ActiveMQ (JMS)."
+},
+{
+  meta:"VARIABLES DE CONTEXTE",
+  q:"Quelle variable de contexte définit le chemin où sont écrites les traces personnalisées du projet ?",
+  options:["logs_path","traces_path","local_node","test_path"],
+  correct:1,
+  explain:"La variable « traces_path » (context.traces_path) définit le chemin des traces personnalisées, distinct du chemin des logs techniques (logs_path)."
+},
+{
+  meta:"JOBS · RÉCEPTION",
+  q:"Quelles actions réalise un job de réception REST en entrée (ex : réception d'une commande) avant sa mise en queue ?",
+  options:[
+    "Il interroge directement TMS en temps réel",
+    "Il reçoit le message, gère les erreurs d'URI/queue, écrit le message en queue, répond OK et trace l'enqueuage",
+    "Il met à jour directement une table ERP",
+    "Il génère un token d'authentification"
+  ],
+  correct:1,
+  explain:"Ces jobs réceptionnent le message REST, gèrent les erreurs de format ou de queue, écrivent le message dans la queue interne, répondent OK et tracent l'opération."
+},
+{
+  meta:"JOBS · MONITORING",
+  q:"Quel type de vérification technique est systématiquement exposé par les jobs REST d'entrée du projet ?",
+  options:[
+    "Un endpoint de healthcheck (réponse à un GET de supervision)",
+    "Un endpoint de purge de la base ERP",
+    "Un endpoint de génération de rapport PDF",
+    "Un endpoint de changement de mot de passe"
+  ],
+  correct:0,
+  explain:"Chaque job REST d'entrée expose une branche technique répondant à un GET de healthcheck pour la supervision."
+},
+{
+  meta:"TRANSPORT · ERP",
+  q:"Quelles informations sont insérées lors de la création d'une nouvelle ligne dans la table de log transport ?",
+  options:[
+    "Uniquement le statut",
+    "BusinessID (IDTRANS), Status (STATUS) et Environnement (ENV)",
+    "Le token et sa date d'expiration",
+    "Le nom du fichier JSON uniquement"
+  ],
+  correct:1,
+  explain:"La ligne insérée contient le BusinessID (IDTRANS), le Status (STATUS) et l'Environnement (ENV) ; l'InternalId (PK) est ensuite récupéré pour mise à jour ultérieure."
+}
+];
+
+const UNIFY_POOL = [
+{
+  meta:"CONTEXTE PROJET",
+  q:"Que réalise le projet UNIFY pour Robertet ?",
+  options:[
+    "Une interface entre le TMS et les transporteurs",
+    "Une interface (ESB Talend) entre le PLM Centric et les ERP locaux (France et US)",
+    "Une migration de base de données ERP",
+    "Un portail web pour les clients"
+  ],
+  correct:1,
+  explain:"Robertet souhaite interconnecter le PLM (Centric) avec ses ERP via un service ESB Talend, afin d'optimiser le transport de la donnée."
+},
+{
+  meta:"CONTEXTE PROJET",
+  q:"Que représente l'ERP FR dans le projet UNIFY ?",
+  options:[
+    "Un outil web SaaS",
+    "Un mainframe AS400 jouant aussi un rôle de CRM et de gestion des colis",
+    "Le PLM américain",
+    "Un simple entrepôt de données de test"
+  ],
+  correct:1,
+  explain:"L'ERP FR est un mainframe AS400 qui a plusieurs rôles, dont CRM et gestion des colis (parcel management)."
+},
+{
+  meta:"CONTEXTE PROJET",
+  q:"Que représente « PV » dans la documentation UNIFY ?",
+  options:[
+    "Un protocole de validation",
+    "Le pendant américain de l'ERP FR (Product Vision)",
+    "Le nom du serveur PLM",
+    "Un type de queue"
+  ],
+  correct:1,
+  explain:"PV (Product Vision) est décrit comme l'équivalent de l'ERP FR mais pour la partie US."
+},
+{
+  meta:"PÉRIMÈTRE",
+  q:"Combien de flux sont au total implémentés pour le projet UNIFY ?",
+  options:["7","10","14","20"],
+  correct:2,
+  explain:"14 flux sont prévus : 7 du PLM vers les systèmes locaux et 7 des systèmes locaux vers le PLM."
+},
+{
+  meta:"NOTIFICATIONS",
+  q:"Quels objets déclenchent l'envoi d'une notification par Centric PLM ?",
+  options:[
+    "Uniquement les commandes clients",
+    "Raw material, Contacts/Fournisseurs, Link Article Supplier",
+    "Uniquement les factures",
+    "Les utilisateurs et leurs droits d'accès"
+  ],
+  correct:1,
+  explain:"Les notifications sont envoyées par PLM dès qu'un des objets suivants est modifié : Raw material, Contacts/Fournisseurs, Link Article Supplier."
+},
+{
+  meta:"NOTIFICATIONS",
+  q:"Par quel protocole et quel système transitent les notifications de modification envoyées par Centric ?",
+  options:[
+    "JDBC via une table de staging",
+    "AMQP via une queue RabbitMQ",
+    "SFTP via un fichier plat",
+    "SOAP via un webservice"
+  ],
+  correct:1,
+  explain:"Les notifications utilisent le protocole AMQP, publiées par PLM dans une queue RabbitMQ, puis routées par l'ESB."
+},
+{
+  meta:"NOTIFICATIONS",
+  q:"Dans quelle queue interne l'ESB route-t-il une notification Raw Material reçue de Centric ?",
+  options:["RM.NOTIFICATION.INTERNAL.Q.P","RM.ACK.INTERNAL.Q.P","UNIFY.RM.AS_400.Q.P","PLM.ACK.INTERNAL.Q.P"],
+  correct:0,
+  explain:"La route ESB place le message de notification RM dans la queue interne RM.NOTIFICATION.INTERNAL.Q.P."
+},
+{
+  meta:"NOTIFICATIONS",
+  q:"Quels champs composent le corps (body) d'un message de notification JSON envoyé par Centric ?",
+  options:[
+    "orderId, customerId, amount, currency",
+    "$cnl, $domain, $id, $patch_Id, $patch_Time",
+    "login, password, token, expiry",
+    "sender, receiver, subject, body"
+  ],
+  correct:1,
+  explain:"Le corps du message contient $cnl (id interne PLM), $domain (type d'objet Centric), $id (id interne HSE), $patch_Id et $patch_Time (id et date de la modification)."
+},
+{
+  meta:"ARCHITECTURE",
+  q:"Comment l'ESB récupère-t-il le contenu complet d'un objet (par opposition à sa simple notification de modification) ?",
+  options:[
+    "Via un second message AMQP",
+    "Via une extraction JDBC/SQL sur la base HSE de Centric",
+    "Via un export CSV quotidien",
+    "Via un appel SOAP dédié"
+  ],
+  correct:1,
+  explain:"Le contenu de l'objet racine est récupéré via JDBC avec des requêtes SQL sur la base HSE de Centric."
+},
+{
+  meta:"ARCHITECTURE",
+  q:"Comment sont qualifiés les flux entrants venant des ERP locaux vers l'ESB ?",
+  options:[
+    "Des flux AMQP où l'ESB est client",
+    "Des API REST où l'ESB joue le rôle de serveur, fournissant les accusés de réception (ACK)",
+    "Des flux SFTP journaliers",
+    "Des flux JDBC directs sur la base PLM"
+  ],
+  correct:1,
+  explain:"Les flux entrants depuis les ERP sont des API REST où l'ESB joue le rôle de serveur, permettant aux systèmes locaux d'envoyer leurs accusés de réception."
+},
+{
+  meta:"ARCHITECTURE",
+  q:"Comment sont qualifiés les flux sortants de l'ESB vers Centric ?",
+  options:[
+    "Des API REST envoyant les accusés de réception à Centric lors d'une transmission réussie",
+    "Des messages AMQP publiés sur une queue Centric",
+    "Des extractions JDBC directes sur la base HSE",
+    "Des fichiers JSON déposés sur un SFTP Centric"
+  ],
+  correct:0,
+  explain:"Les flux sortants vers Centric sont des API REST envoyant les accusés de réception (ACK) lors du succès de la transmission des données."
+},
+{
+  meta:"TALEND · ARCHITECTURE",
+  q:"Pourquoi les Routes Talend sont-elles utilisées plutôt que des Jobs pour les flux entrants temps réel ?",
+  options:[
+    "Les Routes sont plus simples à développer",
+    "Les Routes permettent une écoute continue (HTTP, queues, streaming) adaptée au temps réel, contrairement aux Jobs plus adaptés au batch",
+    "Les Jobs ne peuvent pas se connecter à une base de données",
+    "Les Routes ne nécessitent aucune configuration de contexte"
+  ],
+  correct:1,
+  explain:"Les Routes permettent une écoute continue des requêtes HTTP, des queues de messages ou du streaming, alors que les Jobs sont plus adaptés au traitement batch."
+},
+{
+  meta:"SÉCURITÉ",
+  q:"Quelles sécurités sont mises en place pour la connexion de l'ESB à RabbitMQ (notifications Centric) ?",
+  options:[
+    "Uniquement un certificat SSL",
+    "Une authentification login/mot de passe et un tunnel VPN entre l'ESB et PLM",
+    "Aucune sécurité spécifique n'est requise",
+    "Un token OAuth2 renouvelé toutes les heures"
+  ],
+  correct:1,
+  explain:"La connexion à RabbitMQ nécessite une authentification par login/mot de passe, en complément d'un tunnel VPN établi entre l'ESB et PLM."
+},
+{
+  meta:"CODES RETOUR",
+  q:"Dans le contrat d'interface, que signifie un code retour « 0 » sur le flux de notification ?",
+  options:[
+    "Un format de message invalide",
+    "Publication et routage réussis dans la queue RabbitMQ",
+    "Une erreur de connexion à la base ERP",
+    "Un timeout de traitement"
+  ],
+  correct:1,
+  explain:"Le code 0 (statut OK) signifie que le message a été publié et routé avec succès dans la queue RabbitMQ ; le code 1 (KO) signale un format de message invalide."
+},
+{
+  meta:"TRACES & ERREURS",
+  q:"Quelle règle s'applique à la dernière trace journalisée pour un demi-flux, selon le contrat d'interface ?",
+  options:[
+    "Elle doit toujours être de type V, peu importe le résultat",
+    "Elle doit être de type V en cas de succès, et de type E avec la raison associée en cas d'échec",
+    "Elle n'est jamais journalisée pour des raisons de volumétrie",
+    "Elle doit contenir le mot de passe utilisé pour la connexion"
+  ],
+  correct:1,
+  explain:"Si le traitement réussit, la dernière trace doit être de type V ; sinon, elle doit être de type E avec la raison de l'échec associée."
+},
+{
+  meta:"ACK · STATUTS",
+  q:"Dans l'énumération des statuts d'ACK envoyés à Centric PLM, que signifie le code « 30 » ?",
+  options:["Processing transfer","Processing integration","Integrated","Error"],
+  correct:2,
+  explain:"Le code 30 correspond au statut « Integrated » (intégration terminée avec succès) dans l'énumération des statuts d'ACK PLM."
+},
+{
+  meta:"ACK · STATUTS",
+  q:"Dans l'énumération des statuts d'ACK envoyés à Centric PLM, que signifie le code « 40 » ?",
+  options:["Processing transfer","Processing integration","Integrated","Error"],
+  correct:3,
+  explain:"Le code 40 correspond au statut « Error » dans l'énumération des statuts d'ACK PLM."
+},
+{
+  meta:"ACK · FLUX",
+  q:"Qu'est-ce qui déclenche l'exécution du flux PLM_OUT_ACK_REST ?",
+  options:[
+    "Un appel direct de Centric toutes les 5 minutes",
+    "La lecture de messages dans la queue d'acquittement interne PLM.ACK.INTERNAL.Q.P",
+    "Une notification AMQP envoyée par l'ERP FR",
+    "Un fichier déposé sur le SFTP"
+  ],
+  correct:1,
+  explain:"Le flux PLM_OUT_ACK_REST est déclenché par la lecture des messages présents dans la queue interne PLM.ACK.INTERNAL.Q.P."
+},
+{
+  meta:"ACK · FLUX",
+  q:"Quel attribut permet de déclencher un nouvel export depuis Centric, et comment est-il réinitialisé ?",
+  options:[
+    "L'attribut ExportFlag, réinitialisé par un appel DELETE",
+    "L'attribut GoExport, réinitialisé par une requête PUT",
+    "L'attribut TriggerSync, réinitialisé automatiquement toutes les nuits",
+    "L'attribut StatusReset, réinitialisé manuellement par un administrateur"
+  ],
+  correct:1,
+  explain:"L'export est déclenché par l'attribut GoExport, qui doit être réinitialisé via une requête PUT."
+},
+{
+  meta:"CRITICITÉ",
+  q:"Quel niveau de criticité est généralement attribué aux demi-flux décrits dans le contrat d'interface UNIFY ?",
+  options:["MINOR","MAJOR","LOW","INFORMATIF"],
+  correct:1,
+  explain:"Les demi-flux décrits (notification, ACK, etc.) sont classés avec une criticité MAJOR dans le contrat d'interface."
+},
+{
+  meta:"LOGS COMMUNS",
+  q:"À quoi sert le champ « STEP_ORDER » dans la structure de logs commune du projet ?",
+  options:[
+    "Il identifie le serveur ayant généré le log",
+    "Il indique l'ordre logique de l'opération dans le déroulement global du traitement",
+    "Il contient le code d'erreur HTTP",
+    "Il précise l'environnement (DEV/TEST/PROD)"
+  ],
+  correct:1,
+  explain:"STEP_ORDER indique l'ordre logique de l'opération dans le workflow global, utile pour suivre la séquence du traitement."
+},
+{
+  meta:"LOGS COMMUNS",
+  q:"Que représente typiquement la valeur « V » dans le champ TraceType des logs ?",
+  options:["Validation","Verbose (trace d'information/succès)","Version","Vérification manuelle"],
+  correct:1,
+  explain:"TraceType vaut typiquement « V » pour Verbose, correspondant à une trace d'information ou de succès."
+},
+{
+  meta:"LOGS COMMUNS",
+  q:"Quelle entité correspond à la toute première étape (réception de la notification) dans le déroulé de bout en bout ?",
+  options:["PLM_OUT_ACK_REST","PLM_IN_*_NOTIFICATION","PLM_IN_*_HSE_REST","PLM_IN_*_JDBC"],
+  correct:1,
+  explain:"L'étape 1 (« Notification Reception ») est journalisée par l'entité PLM_IN_*_NOTIFICATION."
+},
+{
+  meta:"LOGS COMMUNS",
+  q:"Dans l'exemple de bout en bout documenté, quelle est la durée totale approximative entre la réception et l'ACK final ?",
+  options:["Moins d'une seconde","Environ 4 secondes","Environ 1 minute","Environ 1 heure"],
+  correct:1,
+  explain:"L'ensemble du traitement, de la réception à l'accusé de réception final, prend environ 4 secondes dans l'exemple documenté."
+},
+{
+  meta:"LOGS COMMUNS",
+  q:"Dans quelle queue est enqueuée la donnée Raw Material d'un affilié FR, selon l'exemple de flux de bout en bout ?",
+  options:["RM.NOTIFICATION.INTERNAL.Q.P","PLM.ACK.INTERNAL.Q.P","UNIFY.RM.AS_400.Q.P","UNIFY.RM.PV.Q.P"],
+  correct:2,
+  explain:"L'affilié FR est enqueué vers UNIFY.RM.AS_400.Q.P, tandis que la queue UNIFY.RM.PV.Q.P concerne l'affilié US."
+},
+{
+  meta:"LOGS COMMUNS",
+  q:"Que signifie l'étape « No affiliate » dans le déroulé de bout en bout ?",
+  options:[
+    "Le message est corrompu",
+    "Aucune donnée FR ou US n'est disponible pour cet affilié",
+    "L'utilisateur n'a pas les droits nécessaires",
+    "La queue cible n'existe pas"
+  ],
+  correct:1,
+  explain:"L'étape « No affiliate » signifie qu'aucune donnée FR ou US n'est disponible pour l'affilié concerné."
+},
+{
+  meta:"JOBLETS",
+  q:"Quels joblets reviennent le plus fréquemment dans la configuration des jobs/routes du projet UNIFY ?",
+  options:[
+    "JobletMailSender, JobletArchiver, JobletCompressor",
+    "JobletLoadContext, JobletLogcatcher, JobletCentricToken",
+    "JobletScheduler, JobletValidator, JobletEncryptor",
+    "JobletBackup, JobletMonitor, JobletRetry"
+  ],
+  correct:1,
+  explain:"La plupart des jobs/routes du projet s'appuient sur JobletLoadContext, JobletLogcatcher et JobletCentricToken."
+},
+{
+  meta:"HSE REST",
+  q:"Que fait le composant tRestRequest dans un flux comme PLM_IN_RM_HSE_REST ?",
+  options:[
+    "Il envoie un mail d'erreur",
+    "Il expose l'endpoint REST principal du service (ex : /apm/rm/{id}) permettant de récupérer un objet par son ID",
+    "Il écrit dans la table de staging",
+    "Il gère le renouvellement du token"
+  ],
+  correct:1,
+  explain:"tRestRequest crée le service REST et expose l'endpoint principal (ex: /apm/rm/{id}) permettant de requêter l'objet par son identifiant."
+},
+{
+  meta:"GESTION D'ERREUR",
+  q:"Que doit-il se passer en cas de mise à jour en erreur, ou si le service HSE de Centric est injoignable ?",
+  options:[
+    "Le message est ignoré silencieusement",
+    "Une erreur doit être générée",
+    "Le job retente indéfiniment sans journalisation",
+    "Le flux bascule automatiquement en mode dégradé sans trace"
+  ],
+  correct:1,
+  explain:"En cas de mise à jour en erreur ou d'indisponibilité du service HSE, une erreur doit être générée."
+},
+{
+  meta:"SÉCURITÉ",
+  q:"Quelle exigence de sécurité s'applique spécifiquement à la queue JMS utilisée pour les ACK ?",
+  options:[
+    "Elle doit être accessible depuis Internet pour la supervision",
+    "Elle ne doit pas être exposée sur Internet",
+    "Elle doit être chiffrée avec un algorithme propriétaire",
+    "Elle doit être purgée automatiquement toutes les heures"
+  ],
+  correct:1,
+  explain:"La queue JMS utilisée pour les ACK ne doit pas être exposée sur Internet."
+}
+];
+
+const EDI_POOL = [
+{
+  meta:"CONTEXTE PROJET",
+  q:"Quel est l'objectif du workflow EDI décrit dans la documentation ?",
+  options:[
+    "Échanger des données entre le TMS et les transporteurs",
+    "Échanger des données entre le client « Coca » via Generix et l'ERP AS400 de Grasse",
+    "Synchroniser le PLM Centric avec l'ERP",
+    "Alimenter l'entrepôt de données (DWH) à partir de l'AS400"
+  ],
+  correct:1,
+  explain:"L'objectif du workflow est d'échanger des données entre le client « Coca » via GENERIX et l'ERP Grasse AS400."
+},
+{
+  meta:"PÉRIMÈTRE",
+  q:"Combien de flux au total sont implémentés pour le projet EDI ?",
+  options:["1","2","3","5"],
+  correct:2,
+  explain:"3 flux sont implémentés : 1 flux de Generix vers l'ERP, et 2 flux de l'ERP vers Generix."
+},
+{
+  meta:"CONTEXTE PROJET",
+  q:"Que représente Generix (G.E.S) dans cette architecture ?",
+  options:[
+    "Une base de données AS400 dédiée",
+    "Un service SaaS (TradeXpress Infinity) utilisé pour automatiser et sécuriser les échanges EDI entre partenaires",
+    "Un outil de supervision Talend interne",
+    "Le nom du serveur SFTP de Robertet"
+  ],
+  correct:1,
+  explain:"Generix / G.E.S est TradeXpress Infinity en mode SaaS, utilisé pour automatiser et sécuriser les échanges EDI entre partenaires."
+},
+{
+  meta:"JOBS",
+  q:"Quels sont les 3 jobs Talend principaux du projet EDI ?",
+  options:[
+    "EDI_IN_COCA_ORDER_JDBC, EDI_OUT_COCA_ORDRSP_SFTP, EDI_OUT_COCA_INVOIC_SFTP",
+    "EDI_IN_ORDER_REST, EDI_OUT_ORDER_TMS, EDI_OUT_ORDERACK_JDBC",
+    "EDI_TECH_CONNEXION, EDI_TECH_PURGE_LOG, EDI_IN_COCA_ORDER_JDBC",
+    "EDI_IN_INVOIC_SFTP, EDI_OUT_INVOIC_JDBC, EDI_OUT_ORDRSP_REST"
+  ],
+  correct:0,
+  explain:"L'architecture repose sur 3 jobs principaux : EDI_IN_COCA_ORDER_JDBC, EDI_OUT_COCA_ORDRSP_SFTP et EDI_OUT_COCA_INVOIC_SFTP."
+},
+{
+  meta:"FLUX",
+  q:"Quel protocole est utilisé pour le flux ORDER, de Generix vers l'ERP ?",
+  options:["REST uniquement","SFTP + JDBC","AMQP","SOAP"],
+  correct:1,
+  explain:"Le flux ORDER (Generix vers ERP) utilise SFTP + JDBC : récupération du fichier par SFTP puis intégration en base via JDBC."
+},
+{
+  meta:"FLUX",
+  q:"Que représentent respectivement les messages ORDER, ORDCHG et ORDSUP ?",
+  options:[
+    "Facture, avoir, relance",
+    "Ordre de commande, changement dans l'ordre de commande, annulation de l'ordre de commande",
+    "Accusé de réception, rejet, correction",
+    "Commande, livraison, retour"
+  ],
+  correct:1,
+  explain:"ORDER est l'ordre de commande, ORDCHG un changement dans l'ordre de commande, et ORDSUP une annulation de l'ordre de commande."
+},
+{
+  meta:"FLUX",
+  q:"Que représente le flux ORDRSP ?",
+  options:[
+    "Une facture envoyée à Generix",
+    "Un accusé de réception de commande envoyé de l'ERP vers Generix",
+    "Une commande envoyée de Generix vers l'ERP",
+    "Un rapport d'erreur technique"
+  ],
+  correct:1,
+  explain:"ORDRSP est l'accusé de réception de commande, envoyé de l'ERP vers Generix."
+},
+{
+  meta:"FLUX",
+  q:"Que représente le flux INVOIC ?",
+  options:["Un ordre de commande","Une facture, envoyée de l'ERP vers Generix","Un accusé de réception","Une notification d'erreur"],
+  correct:1,
+  explain:"INVOIC correspond à la facture, transmise de l'ERP vers Generix."
+},
+{
+  meta:"JOBS · SORTIE",
+  q:"Dans les jobs de sortie EDI (ORDRSP et INVOIC), quel est l'ordre des étapes après l'initialisation des connexions ?",
+  options:[
+    "Dépôt sur le SFTP Generix, écriture du fichier, suppression des données AS400, copie en backup",
+    "Écriture du fichier, copie dans le répertoire de backup, dépôt sur le SFTP Generix, suppression des données de l'AS400",
+    "Suppression des données AS400, écriture du fichier, dépôt sur le SFTP, copie en backup",
+    "Copie en backup, suppression des données AS400, écriture du fichier, dépôt sur le SFTP"
+  ],
+  correct:1,
+  explain:"Après l'initialisation des connexions (AS400 et Generix, avec tDie en cas d'échec), les jobs écrivent le fichier, le copient dans le backup, le déposent sur le SFTP Generix, puis suppriment les données de l'AS400."
+},
+{
+  meta:"ARCHITECTURE",
+  q:"Quels sont les deux sous-dossiers principaux de l'arborescence Talend des jobs EDI ?",
+  options:[
+    "PROD et TEST",
+    "TECHNIQUE (jobs de séquence de test/développement) et Standard (jobs principaux)",
+    "IN et OUT",
+    "ERP et GENERIX"
+  ],
+  correct:1,
+  explain:"On retrouve le sous-dossier TECHNIQUE pour les jobs de test/développement, et le dossier principal « Standard » pour les jobs principaux."
+},
+{
+  meta:"VARIABLES DE CONTEXTE",
+  q:"Quelles variables de contexte définissent respectivement les sous-dossiers pour les fichiers d'entrée, de sortie, en erreur et temporaires ?",
+  options:[
+    "data_edi_path, logs_path, traces_path, local_node",
+    "file_in_path, file_out_path, file_error_path, tmp_path",
+    "environnement, node_type, business_process, supervision_recipient",
+    "mail_rest_pwd, mail_rest_url, supervision_recipient, data_edi_path"
+  ],
+  correct:1,
+  explain:"Les variables file_in_path, file_out_path, file_error_path et tmp_path définissent les sous-dossiers respectifs pour les fichiers d'entrée, de sortie, en erreur et temporaires."
+},
+{
+  meta:"JOBLETS",
+  q:"Quel est le rôle du joblet Tech_LoadContextVariable ?",
+  options:[
+    "Envoyer un mail de supervision en cas d'erreur",
+    "Charger les variables présentes dans \\data\\contexts\\EDI\\*.properties, avec un mécanisme d'encryption possible",
+    "Se connecter au serveur SFTP Generix",
+    "Écrire les traces custom au format Elastic"
+  ],
+  correct:1,
+  explain:"Ce joblet charge les variables présentes dans \\data\\contexts\\EDI\\*.properties ; un mécanisme d'encryption peut être utilisé."
+},
+{
+  meta:"JOBLETS",
+  q:"Quel est le rôle du joblet Tech_LogCatcher ?",
+  options:[
+    "Gérer la connexion à l'AS400 uniquement",
+    "Gérer 2 traces d'erreur : les Custom_traces et les logs Talend",
+    "Purger les anciens fichiers du répertoire de backup",
+    "Générer le fichier CSV de sortie"
+  ],
+  correct:1,
+  explain:"Le joblet Tech_LogCatcher gère 2 traces d'erreur : les Custom_traces et les Logs Talend."
+},
+{
+  meta:"JOBLETS",
+  q:"Combien de joblets sont utilisés au total dans le projet EDI ?",
+  options:["2","4","6","8"],
+  correct:1,
+  explain:"La documentation précise que 4 joblets sont utilisés dans le projet EDI."
+},
+{
+  meta:"JOBS",
+  q:"Quel est le rôle du composant tDie en début de chaque job EDI ?",
+  options:[
+    "Il retente automatiquement la connexion trois fois",
+    "Il termine l'exécution du flux en cas d'erreur, par exemple si la connexion n'a pas pu être établie",
+    "Il génère le fichier de log Elastic",
+    "Il envoie un mail à la liste de distribution"
+  ],
+  correct:1,
+  explain:"Le composant tDie a pour rôle de terminer l'exécution du flux en cas d'erreur, notamment si la connexion n'a pas été établie."
+},
+{
+  meta:"JOBS · ORDER",
+  q:"Quel préfixe de nom de fichier le job EDI_IN_COCA_ORDER_JDBC récupère-t-il sur le SFTP Generix ?",
+  options:["INVOIC","ORDRSP","ORDERS","COCA"],
+  correct:2,
+  explain:"Le job récupère tous les fichiers débutant par ORDERS depuis le SFTP Generix."
+},
+{
+  meta:"JOBS · ORDER",
+  q:"Quelles tables AS400 sont alimentées par le job EDI_IN_COCA_ORDER_JDBC ?",
+  options:["CO300PF, CO301PF, CO302PF","CO294PF, CO295PF","CO292PF, CO293PF, CO296PF","LO102PF, LO103PF"],
+  correct:2,
+  explain:"Les tables alimentées sont CO292PF (Entête), CO293PF (Lignes) et CO296PF (Commentaires)."
+},
+{
+  meta:"JOBS · ORDER",
+  q:"Que se passe-t-il une fois les données envoyées avec succès dans l'AS400 par EDI_IN_COCA_ORDER_JDBC ?",
+  options:[
+    "Les fichiers sont immédiatement supprimés sans copie",
+    "Les fichiers sont copiés dans le répertoire de backup puis supprimés du SFTP Generix",
+    "Les fichiers restent indéfiniment dans le répertoire d'entrée",
+    "Un accusé de réception est renvoyé à Coca directement"
+  ],
+  correct:1,
+  explain:"Une fois les données envoyées dans l'AS400, les fichiers sont copiés dans le répertoire de backup, puis supprimés de Generix."
+},
+{
+  meta:"JOBS · INVOIC",
+  q:"Quelles tables AS400 structurent le flux sortant INVOIC (facture) ?",
+  options:[
+    "CO294PF (Entête), CO295PF (Lignes)",
+    "CO300PF (Entête), CO301PF (Lignes), CO302PF (Totaux)",
+    "CO292PF, CO293PF, CO296PF",
+    "LO105PF, LO106PF"
+  ],
+  correct:1,
+  explain:"Le flux INVOIC s'appuie sur CO300PF (Entête), CO301PF (Lignes) et CO302PF (Totaux)."
+},
+{
+  meta:"JOBS · ORDRSP",
+  q:"Quelles tables AS400 structurent le flux sortant ORDRSP (accusé de réception) ?",
+  options:[
+    "CO294PF (Entête), CO295PF (Lignes)",
+    "CO300PF, CO301PF, CO302PF",
+    "CO292PF, CO293PF",
+    "CO296PF uniquement"
+  ],
+  correct:0,
+  explain:"Le flux ORDRSP s'appuie sur les tables CO294PF (Entête) et CO295PF (Lignes)."
+},
+{
+  meta:"MAPPING",
+  q:"Quelle clé technique est utilisée pour identifier un message, dans les deux sens Generix ↔ AS400 ?",
+  options:[
+    "Uniquement le numéro de commande",
+    "Type de message + Numéro de message + Référence commerciale",
+    "Un UUID généré par Talend",
+    "Le nom du fichier CSV seul"
+  ],
+  correct:1,
+  explain:"La clé utilisée dans les deux sens est : Type de message + Numéro de message + Référence commerciale."
+},
+{
+  meta:"MAPPING",
+  q:"Comment sont structurées les 3 premières colonnes des fichiers CSV mappés ?",
+  options:[
+    "COL1 : date, COL2 : heure, COL3 : utilisateur",
+    "COL1 : identifiant de la ligne (table cible), COL2 : référence (n° facture/message), COL3+ : colonnes positionnelles dans l'ordre",
+    "COL1 : login, COL2 : mot de passe, COL3 : token",
+    "COL1 : type de flux, COL2 : statut, COL3 : checksum"
+  ],
+  correct:1,
+  explain:"COL1 contient l'identifiant de la ligne (table cible type CO300PF...), COL2 la référence, puis les colonnes suivantes reprennent l'ordre des colonnes du positionnel."
+},
+{
+  meta:"EXPLOITATION",
+  q:"Quelle est la fréquence d'exécution typique donnée pour les jobs EDI ?",
+  options:["Toutes les 5 minutes","Toutes les 30 minutes","Une fois par jour","Toutes les heures"],
+  correct:1,
+  explain:"La fréquence d'exécution mentionnée est de 30 minutes (exemple : 8h00 / 8h30 / 9h30)."
+},
+{
+  meta:"GESTION DU REJEU",
+  q:"Comment est géré le rejeu automatique côté Generix vers AS400 ?",
+  options:[
+    "Un compteur de tentatives est incrémenté à chaque essai",
+    "Tant que le fichier n'est pas supprimé du dossier SFTP, il sera rejoué à la prochaine exécution",
+    "Le rejeu est déclenché manuellement par un opérateur",
+    "Aucun mécanisme de rejeu n'existe sur ce flux"
+  ],
+  correct:1,
+  explain:"Tant que le fichier n'est pas supprimé du dossier SFTP, il sera rejoué à la prochaine exécution."
+},
+{
+  meta:"GESTION DU REJEU",
+  q:"Comment est géré le rejeu automatique côté AS400 vers Generix ?",
+  options:[
+    "Tant que le message reste présent dans les tables AS400, il sera rejoué à la prochaine exécution",
+    "Le rejeu nécessite une purge manuelle de la table de tracking",
+    "Le fichier CSV est renommé pour forcer le rejeu",
+    "Il n'existe pas de mécanisme de rejeu sur ce sens"
+  ],
+  correct:0,
+  explain:"Tant que le message sera dans les tables AS400, il sera rejoué à la prochaine exécution."
+},
+{
+  meta:"GESTION D'ERREUR",
+  q:"Que fait le traitement en cas d'erreur d'intégration ou d'erreur « inconnue » sur le flux Generix vers AS400 ?",
+  options:[
+    "Il ignore l'erreur et poursuit le traitement",
+    "Il déplace le fichier dans un dossier « erreur » et le supprime du SFTP pour éviter tout rejeu",
+    "Il relance automatiquement le job 3 fois avant d'abandonner",
+    "Il bloque tous les futurs traitements jusqu'à intervention manuelle"
+  ],
+  correct:1,
+  explain:"Si le problème concerne une erreur d'intégration ou une erreur inconnue, le fichier est déplacé dans un dossier « erreur » et supprimé du sFTP afin d'éviter tout rejeu."
+},
+{
+  meta:"GESTION D'ERREUR",
+  q:"Par quel canal les erreurs sont-elles notifiées à la liste de distribution ?",
+  options:[
+    "Par SMS via un service tiers",
+    "Par e-mail, via le Web Service Talend déjà existant",
+    "Par une alerte dans TMC uniquement",
+    "Par un ticket créé automatiquement dans un outil externe"
+  ],
+  correct:1,
+  explain:"Un email est envoyé à la liste de distribution via le Web Service Talend déjà existant."
+},
+{
+  meta:"SFTP",
+  q:"Quelle est la structure d'arborescence du SFTP Generix pour les fichiers entrants (du client vers Robertet) ?",
+  options:[
+    "outbox/FRA/COCA/ORDERS/",
+    "inbox/FRA/COCA/ORDERS/",
+    "in/COCA/FRA/ORDERS/",
+    "ORDERS/FRA/COCA/inbox/"
+  ],
+  correct:1,
+  explain:"L'arborescence prévue est inbox/FRA/COCA/ORDERS/ pour les fichiers en entrée de l'ERP Robertet."
+},
+{
+  meta:"JOBS TECHNIQUES",
+  q:"À quoi servent les jobs techniques EDI_TECH_CONNEXION et EDI_TECH_PURGE_LOG ?",
+  options:[
+    "Ils gèrent respectivement le mapping ORDER et le mapping INVOIC",
+    "EDI_TECH_CONNEXION teste l'ensemble des connexions, EDI_TECH_PURGE_LOG supprime les logs et anciens fichiers",
+    "Ils remplacent les 3 jobs métier principaux",
+    "Ils gèrent l'authentification des utilisateurs Talend"
+  ],
+  correct:1,
+  explain:"EDI_TECH_CONNEXION teste toutes les connexions (SFTP, AS400, Web Service email) et EDI_TECH_PURGE_LOG supprime les logs, backups et fichiers en erreur obsolètes."
+},
+{
+  meta:"LOGS",
+  q:"Quels champs composent une entrée de log standard du projet EDI ?",
+  options:[
+    "Login, Password, Token, Expiry",
+    "BusinessProcess, FLOW, Entity, InternalID, BusinessID, StepLabel",
+    "Sender, Receiver, Subject, Body",
+    "TableName, ColumnName, RowCount, Timestamp"
+  ],
+  correct:1,
+  explain:"Le log type comprend BusinessProcess (EDI), FLOW (type de message, ex ORDERS), Entity (nom du job), InternalID (INDEX), BusinessID (RefMessage) et StepLabel (nom du fichier)."
+}
+
+];
+
+const ORBI2_POOL = [
+{
+  meta:"CONTEXTE PROJET",
+  q:"Quel périmètre fonctionnel couvre le projet ORBI2 ?",
+  options:[
+    "La gestion des commandes clients (Order Management)",
+    "Le domaine Inventory / Purchase, via le plan Daily DWH Inventory / Purchase",
+    "L'échange de données EDI avec les partenaires",
+    "L'interface entre le PLM et les ERP locaux"
+  ],
+  correct:1,
+  explain:"ORBI2 alimente les couches SA, ODS, DWH et DTM du domaine Inventory / Purchase, via le plan « Daily DWH Inventory / Purchase »."
+},
+{
+  meta:"ARCHITECTURE",
+  q:"Quelles couches de données successives sont alimentées par le pipeline ORBI2 ?",
+  options:[
+    "Staging, Production, Archive",
+    "SA, ODS, DWH et DMT",
+    "IN, OUT, ACK",
+    "RAW, CURATED, GOLD"
+  ],
+  correct:1,
+  explain:"Le pipeline ORBI2 alimente successivement les couches SA (Staging Area), ODS, DWH et DMT."
+},
+{
+  meta:"CONFIGURATION",
+  q:"Quel est le chemin racine du projet ORBI2 sur la VM ?",
+  options:["C:/ROBERTET/EDI","C:/ROBERTET/ORBIv2","C:/ROBERTET/DATAWAREHOUSE","C:/ROBERTET/OOBM"],
+  correct:1,
+  explain:"La racine VM du projet est C:/ROBERTET/ORBIv2."
+},
+{
+  meta:"CONFIGURATION",
+  q:"Quel est l'engine de production sur lequel tourne le plan ORBI2 ?",
+  options:["VMESBPRDFC001","VMESBPRDFC003 / LSLA-Cluster-1(1)","VMESBTESTFC002","LSLA-Cluster-2"],
+  correct:1,
+  explain:"L'engine PROD ciblé est VMESBPRDFC003 / LSLA-Cluster-1(1)."
+},
+{
+  meta:"PÉRIMÈTRE",
+  q:"Combien de tâches compose le plan TMC complet du flux ORBI2 (prérequis OOBM inclus) ?",
+  options:["4","8","12","20"],
+  correct:2,
+  explain:"Le plan complet comprend 12 tâches, des prérequis OOBM (MAIN_ALIM_*) jusqu'à la clôture (SEQ_06_END_SEQUENCE)."
+},
+{
+  meta:"PÉRIMÈTRE",
+  q:"Quelles sont les 4 tâches prérequises, partagées avec le plan OOBM, avant le démarrage des séquences propres à ORBI2 ?",
+  options:[
+    "SEQ_01_START_SEQUENCE, SEQ_02_01, SEQ_02_02, SEQ_03",
+    "MAIN_ALIM_SA, MAIN_ALIM_ODS, MAIN_ALIM_DWH, MAIN_ALIM_DMT",
+    "EDI_IN_COCA_ORDER_JDBC, EDI_OUT_COCA_ORDRSP_SFTP, EDI_OUT_COCA_INVOIC_SFTP, EDI_TECH_PURGE_LOG",
+    "SEQ_04, SEQ_05_01, SEQ_05_02, SEQ_06"
+  ],
+  correct:1,
+  explain:"Les 4 premières tâches (MAIN_ALIM_SA, MAIN_ALIM_ODS, MAIN_ALIM_DWH, MAIN_ALIM_DMT) sont des prérequis partagés avec OOBM."
+},
+{
+  meta:"SÉQUENCES",
+  q:"Quel est le rôle de la séquence SEQ_02_02_GESTION_DOUBLONS ?",
+  options:[
+    "Elle initialise le plan ORBI2",
+    "Elle gère les doublons et doit être surveillée particulièrement",
+    "Elle clôture le traitement",
+    "Elle synchronise les référentiels communs PostgreSQL"
+  ],
+  correct:1,
+  explain:"SEQ_02_02_GESTION_DOUBLONS assure la gestion des doublons ; cette étape doit être surveillée."
+},
+{
+  meta:"SÉQUENCES",
+  q:"Quel est le rôle de la séquence SEQ_05_02_DMT_GESTION_UNKWOWN ?",
+  options:[
+    "Elle gère les enregistrements « unknown » au niveau de la couche DMT",
+    "Elle purge les anciens logs techniques",
+    "Elle gère les doublons de la couche SA",
+    "Elle initialise la connexion Oracle US"
+  ],
+  correct:0,
+  explain:"Cette séquence gère spécifiquement les données « unknown » identifiées au niveau de la couche DMT."
+},
+{
+  meta:"SÉQUENCES",
+  q:"Quelle est la première séquence propre à ORBI2, exécutée après les prérequis partagés avec OOBM ?",
+  options:["SEQ_06_END_SEQUENCE","SEQ_01_START_SEQUENCE","SEQ_03_SEQUENCE_ODS","SEQ_04_SEQUENCE_DWH"],
+  correct:1,
+  explain:"SEQ_01_START_SEQUENCE assure l'initialisation du traitement ORBI2, juste après les prérequis OOBM."
+},
+{
+  meta:"SÉQUENCES",
+  q:"Quelle est la dernière séquence du plan ORBI2 ?",
+  options:["SEQ_05_01_SEQUENCE_DMT","SEQ_02_02_GESTION_DOUBLONS","SEQ_06_END_SEQUENCE","SEQ_03_SEQUENCE_ODS"],
+  correct:2,
+  explain:"SEQ_06_END_SEQUENCE assure la clôture et la fin du traitement du plan ORBI2."
+},
+{
+  meta:"TRACKING",
+  q:"Quelle table technique permet de suivre la cohérence des exécutions du plan ORBI2 ?",
+  options:["talend_amc.tech_load_tracking","orbi_dwh.dwh_r_material","common_data_model.bi_data","orbi_sa.sa_arttot"],
+  correct:0,
+  explain:"La table talend_amc.tech_load_tracking permet de vérifier la cohérence de la dernière exécution."
+},
+{
+  meta:"RÈGLES BAU",
+  q:"Que ne faut-il jamais faire sur la table de tracking en production sans validation Robertet ?",
+  options:[
+    "La consulter en lecture seule",
+    "La purger, la truncater ou la modifier",
+    "L'exporter vers un fichier CSV",
+    "La répliquer vers l'environnement de recette"
+  ],
+  correct:1,
+  explain:"Aucune purge, truncate ou modification de tech_load_tracking en production ne doit être faite sans validation Robertet."
+},
+{
+  meta:"ENTRÉES / SOURCES",
+  q:"Quelles sont les deux sources métier principales du flux ORBI2, en dehors des référentiels PostgreSQL communs ?",
+  options:[
+    "SFTP Generix et AS400",
+    "AS400 (LIBFIC / FINANCEPROD) et Oracle US (XXORBI)",
+    "PLM Centric et RabbitMQ",
+    "TMS et ActiveMQ"
+  ],
+  correct:1,
+  explain:"Les sources d'entrée sont l'AS400 (schémas LIBFIC / FINANCEPROD) et Oracle US (schéma XXORBI)."
+},
+{
+  meta:"ENTRÉES / SOURCES",
+  q:"Quel schéma Oracle US alimente le flux ORBI2 ?",
+  options:["FINANCEPROD","LIBFIC","XXORBI","BI_data"],
+  correct:2,
+  explain:"Le schéma Oracle US référencé est XXORBI."
+},
+{
+  meta:"CONFIGURATION",
+  q:"Quels sous-dossiers de C:/ROBERTET/ORBIv2 doivent être contrôlés lors d'une exploitation ORBI2 ?",
+  options:[
+    "config, logs, custom_traces, tmp_data",
+    "in, out, error, backup",
+    "SA, ODS, DWH, DMT",
+    "context, jobs, joblets, routes"
+  ],
+  correct:0,
+  explain:"Les sous-dossiers à vérifier sont config, logs, custom_traces et tmp_data."
+},
+{
+  meta:"ESCALADE",
+  q:"À quel niveau d'escalade correspond un plan non démarré, un engine indisponible ou un log TMC en KO ?",
+  options:["N1 Exploitation (Operations / Keyrus)","N2 Applicatif / Data","N3 Infrastructure / BDD","CAB / Décision"],
+  correct:0,
+  explain:"Plan non démarré, engine indisponible et log TMC KO relèvent du niveau N1 Exploitation, escaladé vers Operations / Keyrus."
+},
+{
+  meta:"DIAGNOSTIC PLAN KO",
+  q:"Que doit faire la TMA en premier lieu face à un plan ORBI2 en KO ?",
+  options:[
+    "Relancer immédiatement le plan complet",
+    "Lire les logs TMC, identifier la couche en erreur, comparer avec tech_load_tracking, contrôler l'engine et le dossier VM",
+    "Contacter directement le CAB pour validation d'un rollback",
+    "Purger la table de tracking pour repartir à zéro"
+  ],
+  correct:1,
+  explain:"Avant toute action, il faut lire les logs TMC, identifier la couche en erreur, comparer avec tech_load_tracking et les logs fichiers, et contrôler l'engine et le dossier VM."
+},
+{
+  meta:"DIAGNOSTIC PLAN KO",
+  q:"En cas de « SA KO », quelle action est interdite sans validation préalable ?",
+  options:[
+    "La relance après correction",
+    "Le truncate / la purge du tracking",
+    "La lecture des logs TMC",
+    "Le contrôle des sources AS400/Oracle/PG"
+  ],
+  correct:1,
+  explain:"En cas de SA KO, le truncate ou la purge du tracking est interdit sans validation."
+},
+{
+  meta:"DIAGNOSTIC PLAN KO",
+  q:"En cas de « DWH KO », quelle action est strictement interdite sans validation ?",
+  options:["Le contrôle des contraintes","Le truncate de la table DWH","La vérification de la mémoire JVM","La relance après cohérence des couches amont"],
+  correct:1,
+  explain:"Le truncate de la table DWH est interdit sans validation en cas de DWH KO."
+},
+{
+  meta:"DIAGNOSTIC PLAN KO",
+  q:"En cas de « DMT KO », quelle action est strictement interdite sans validation ?",
+  options:[
+    "La relance de la séquence unknown après contrôle",
+    "La modification manuelle des dimensions",
+    "La lecture des logs de la tâche",
+    "Le contrôle de la mémoire allouée"
+  ],
+  correct:1,
+  explain:"En cas de DMT KO, la modification manuelle des dimensions est interdite sans validation."
+},
+{
+  meta:"PERFORMANCE",
+  q:"Quelle recommandation de performance est donnée pour le traitement de gros volumes de données ORBI2 ?",
+  options:[
+    "Désactiver le fetch size pour accélérer le traitement",
+    "Privilégier bulk / fetch size / batch size adaptés, avec une valeur de départ recommandée de 20000 si le job le permet",
+    "Toujours utiliser un fetch size de 1 pour éviter les erreurs mémoire",
+    "Lancer plusieurs instances du même job en parallèle"
+  ],
+  correct:1,
+  explain:"Pour les gros volumes, il faut privilégier des paramètres bulk/fetch size/batch size adaptés, avec une valeur de départ de 20000 si compatible avec le job."
+},
+{
+  meta:"CONFIGURATION",
+  q:"Quelles valeurs de configuration doivent être absentes en production, selon les points de contrôle ORBI2 ?",
+  options:[
+    "Les identifiants de connexion PostgreSQL",
+    "Les valeurs de test/studio : dwh_test, IP de recette, environnement=STUDIO, local_node studio",
+    "Les chemins vers le dossier custom_traces",
+    "Les paramètres de fetch size"
+  ],
+  correct:1,
+  explain:"Il faut vérifier l'absence de valeurs test/studio en configuration PROD : dwh_test, l'IP de recette, environnement=STUDIO, local_node studio."
+},
+{
+  meta:"DÉPENDANCES",
+  q:"Quel point de vigilance concerne les dépendances OOBM/ORBI2 après une mise en production OOBM ?",
+  options:[
+    "Vérifier que les tables OOBM ont été supprimées",
+    "Vérifier que les appels communs désactivés lors de la MEP OOBM sont réactivés ou explicitement validés",
+    "Relancer systématiquement tout le plan ORBI2 après chaque MEP OOBM",
+    "Migrer les données OOBM vers le schéma ORBI2"
+  ],
+  correct:1,
+  explain:"Il faut vérifier que les appels communs désactivés lors de la MEP OOBM sont bien réactivés ou explicitement validés pour ORBI2."
+},
+{
+  meta:"ESCALADE",
+  q:"À quel niveau d'escalade correspond une indisponibilité de la base PostgreSQL ou de l'infrastructure VM ?",
+  options:["N1 Exploitation","N2 Applicatif / Data","N3 Infrastructure / BDD","CAB / Décision"],
+  correct:2,
+  explain:"Les problèmes PostgreSQL, Oracle, AS400, VM ou droits relèvent du niveau N3 Infrastructure / BDD (DBA / Exploitation Robertet / Constellation)."
+},
+{
+  meta:"ESCALADE",
+  q:"À quel niveau d'escalade correspond une erreur de mapping ou une volumétrie de données anormale ?",
+  options:["N1 Exploitation","N2 Applicatif / Data","N3 Infrastructure / BDD","CAB / Décision"],
+  correct:1,
+  explain:"Les erreurs SQL, doublons, volumétrie anormale ou mapping relèvent du niveau N2 Applicatif / Data (Keyrus / Sylvie Berthon)."
+},
+{
+  meta:"GOUVERNANCE",
+  q:"Qui doit valider un rollback ou une action destructive en production sur ORBI2 ?",
+  options:["Le DBA seul","Robertet / CAB","Keyrus uniquement","Le Tech Lead architecture seul"],
+  correct:1,
+  explain:"Toute action de rollback, report ou correctif urgent nécessite une validation via Robertet / CAB."
+},
+{
+  meta:"SUPERVISION",
+  q:"Un statut « Successful » dans TMC suffit-il à lui seul à valider une exécution ORBI2 ?",
+  options:[
+    "Oui, c'est le seul critère à vérifier",
+    "Non, les logs et la table de tracking doivent aussi être contrôlés en cas de doute",
+    "Non, il faut systématiquement relancer le plan pour confirmer",
+    "Oui, à condition que le plan ait duré moins de 10 minutes"
+  ],
+  correct:1,
+  explain:"Le statut Successful TMC ne suffit pas à lui seul : les logs et la table de tracking doivent être contrôlés en cas de doute."
+},
+{
+  meta:"ARCHITECTURE",
+  q:"Quel est le rôle de la couche SA dans le pipeline ORBI2 ?",
+  options:[
+    "Elle réalise l'enrichissement final visible par les utilisateurs métier",
+    "Elle assure l'extraction / alimentation initiale depuis les sources (AS400, Oracle US)",
+    "Elle gère uniquement les traces d'erreur",
+    "Elle stocke les référentiels communs PostgreSQL"
+  ],
+  correct:1,
+  explain:"La couche SA (Staging Area) assure l'extraction et l'alimentation initiale des données depuis les sources telles que l'AS400 et Oracle US."
+},
+{
+  meta:"ARCHITECTURE",
+  q:"Quel est le rôle de la couche ODS dans le pipeline ORBI2 ?",
+  options:[
+    "Elle transforme les données de la SA, avec des appels aux référentiels communs US/ORBI2",
+    "Elle réalise uniquement le contrôle de non-régression",
+    "Elle expose les données finales aux applications tierces",
+    "Elle gère le tracking technique des exécutions"
+  ],
+  correct:0,
+  explain:"La couche ODS transforme les données issues de la SA, en s'appuyant notamment sur des appels aux référentiels communs US/ORBI2."
+},
+{
+  meta:"ARCHITECTURE",
+  q:"Quel est le rôle de la couche DWH dans le pipeline ORBI2 ?",
+  options:[
+    "Elle alimente le DWH par upsert/enrichissement à partir de l'ODS",
+    "Elle assure uniquement la purge des anciennes données",
+    "Elle sert de source brute pour la couche SA",
+    "Elle gère l'authentification des utilisateurs BAU"
+  ],
+  correct:0,
+  explain:"La couche DWH réalise l'alimentation par upsert/enrichissement des tables du DWH à partir de la couche ODS."
+}
+
+];
+
+const THEMES = {
+  TMS: {
+    label: "TMS",
+    desc: "Interface Transport Management System — flux, queues, jobs, ERP, alertes",
+    pool: TMS_POOL
+  },
+  UNIFY: {
+    label: "UNIFY",
+    desc: "Interface PLM Centric ↔ ERP FR/US — notifications, ACK, logs",
+    pool: UNIFY_POOL
+  },
+  EDI: {
+    label: "EDI",
+    desc: "Échanges Coca ↔ Generix ↔ AS400 — ORDER, ORDRSP, INVOIC",
+    pool: EDI_POOL
+  },
+  ORBI2: {
+    label: "ORBI2",
+    desc: "DWH Inventory / Purchase — SA, ODS, DWH, DMT, exploitation TMA",
+    pool: ORBI2_POOL
+  }
+};
+
+const QUIZ_LENGTH = 10;
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+const LEVELS = [
+  {name:"Excellent", min:90, color:"#00b050"},
+  {name:"Bon", min:75, color:"#a9d18e"},
+  {name:"Moyen", min:60, color:"#ffc000"},
+  {name:"Faible", min:40, color:"#ff5050"},
+  {name:"Mauvais", min:0, color:"#ff0000"}
+];
+function levelFor(pct){
+  for(const l of LEVELS){ if(pct >= l.min) return l; }
+  return LEVELS[LEVELS.length-1];
+}
+
+// ---------- STATE ----------
+let consultantName = "";
+let currentTheme = null;   // key of THEMES currently being quizzed
+let QUESTIONS = [];
+let current = 0;
+let answers = [];
+let locked = false;
+const results = {};        // { TMS: {correct,total,pct,level,answers,questions}, UNIFY: {...} }
+
+// ---------- SCREEN HELPERS ----------
+function showScreen(id){
+  ['screen-start','screen-themes','screen-quiz','screen-theme-result','screen-final','screen-team'].forEach(s => {
+    document.getElementById(s).classList.toggle('hidden', s !== id);
+  });
+}
+
+// ---------- START SCREEN ----------
+const consultantSelect = document.getElementById('consultant');
+const consultantOther = document.getElementById('consultantOther');
+const startBtn = document.getElementById('startBtn');
+
+consultantSelect.addEventListener('change', () => {
+  consultantOther.style.display = (consultantSelect.value === '__autre__') ? 'block' : 'none';
+  if(consultantSelect.value === '__autre__') consultantOther.focus();
+  updateStartBtn();
+});
+consultantOther.addEventListener('input', updateStartBtn);
+function updateStartBtn(){
+  const v = consultantSelect.value;
+  startBtn.disabled = (v === '__autre__') ? consultantOther.value.trim().length === 0 : v === '';
+}
+
+startBtn.addEventListener('click', () => {
+  consultantName = consultantSelect.value === '__autre__' ? consultantOther.value.trim() : consultantSelect.value;
+  document.getElementById('headerRight').textContent = consultantName.toUpperCase();
+  renderThemeGrid();
+  showScreen('screen-themes');
+});
+
+// ---------- THEME SELECT SCREEN ----------
+function renderThemeGrid(){
+  const grid = document.getElementById('themeGrid');
+  grid.innerHTML = '';
+  document.getElementById('themesSub').textContent =
+    consultantName + ' — sélectionnez une thématique à évaluer.';
+
+  Object.keys(THEMES).forEach(key => {
+    const theme = THEMES[key];
+    const done = results[key];
+    const card = document.createElement('div');
+    card.className = 'theme-card';
+
+    let statusHtml;
+    if(done){
+      const lvl = done.level;
+      statusHtml = '<span class="tc-status done" style="background:'+lvl.color+'22; color:'+lvl.color+'; border:1px solid '+lvl.color+'66;">✓ '+lvl.name+' · '+done.pct+'%</span>';
+    } else {
+      statusHtml = '<span class="tc-status todo">Non commencé</span>';
+    }
+
+    card.innerHTML =
+      '<div class="tc-main">' +
+        '<div class="tc-name">' + theme.label + '</div>' +
+        '<div class="tc-desc">' + theme.desc + ' · ' + theme.pool.length + ' questions en banque</div>' +
+      '</div>' +
+      statusHtml +
+      '<div class="tc-arrow">' + (done ? '↻' : '→') + '</div>';
+
+    card.addEventListener('click', () => startThemeQuiz(key));
+    grid.appendChild(card);
+  });
+
+  document.getElementById('finalSummaryBtn').disabled = Object.keys(results).length === 0;
+}
+
+document.getElementById('finalSummaryBtn').addEventListener('click', showFinalSummary);
+
+// ---------- QUIZ SCREEN ----------
+function startThemeQuiz(themeKey){
+  currentTheme = themeKey;
+  QUESTIONS = shuffle(THEMES[themeKey].pool).slice(0, QUIZ_LENGTH);
+  current = 0;
+  answers = new Array(QUESTIONS.length).fill(null);
+  locked = false;
+  document.getElementById('headerRight').textContent = consultantName.toUpperCase() + ' · ' + THEMES[themeKey].label;
+  showScreen('screen-quiz');
+  renderQuestion();
+}
+
+const qmeta = document.getElementById('qmeta');
+const qtext = document.getElementById('qtext');
+const optionsEl = document.getElementById('options');
+const feedbackEl = document.getElementById('feedback');
+const nextBtn = document.getElementById('nextBtn');
+const progressFill = document.getElementById('progressFill');
+const progressCount = document.getElementById('progressCount');
+const scoreLive = document.getElementById('scoreLive');
+
+function renderQuestion(){
+  locked = false;
+  const item = QUESTIONS[current];
+  qmeta.textContent = THEMES[currentTheme].label + ' · ' + item.meta;
+  qtext.textContent = (current+1) + ". " + item.q;
+  optionsEl.innerHTML = '';
+  feedbackEl.classList.remove('show');
+  feedbackEl.textContent = '';
+  nextBtn.textContent = 'Valider';
+  nextBtn.disabled = true;
+
+  item.options.forEach((opt, i) => {
+    const div = document.createElement('div');
+    div.className = 'opt';
+    div.innerHTML = '<span class="dot"></span><span>' + opt + '</span>';
+    div.addEventListener('click', () => selectOption(i));
+    optionsEl.appendChild(div);
+  });
+
+  progressFill.style.width = ((current)/QUESTIONS.length*100) + '%';
+  progressCount.textContent = 'Q' + (current+1) + '/' + QUESTIONS.length;
+  updateScoreLive();
+}
+
+function selectOption(i){
+  if(locked) return;
+  answers[current] = i;
+  [...optionsEl.children].forEach((el, idx) => el.classList.toggle('selected', idx === i));
+  nextBtn.disabled = false;
+}
+
+function updateScoreLive(){
+  const answeredCount = answers.slice(0, current).filter(a => a !== null).length;
+  const correctCount = answers.slice(0, current).filter((a,i) => a === QUESTIONS[i].correct).length;
+  scoreLive.textContent = 'Score : ' + correctCount + '/' + answeredCount;
+}
+
+nextBtn.addEventListener('click', () => {
+  const item = QUESTIONS[current];
+  if(!locked){
+    locked = true;
+    const chosen = answers[current];
+    [...optionsEl.children].forEach((el, idx) => {
+      el.classList.add('disabled');
+      if(idx === item.correct) el.classList.add('correct');
+      else if(idx === chosen) el.classList.add('incorrect');
+    });
+    feedbackEl.classList.add('show');
+    const verdict = chosen === item.correct ? '<b style="color:var(--excellent)">Correct.</b> ' : '<b style="color:var(--mauvais)">Incorrect.</b> ';
+    feedbackEl.innerHTML = verdict + item.explain;
+    nextBtn.textContent = (current === QUESTIONS.length-1) ? 'Voir le résultat →' : 'Question suivante →';
+    return;
+  }
+  if(current < QUESTIONS.length-1){
+    current++;
+    renderQuestion();
+  } else {
+    finishThemeQuiz();
+  }
+});
+
+// ---------- THEME RESULT SCREEN ----------
+function finishThemeQuiz(){
+  const total = QUESTIONS.length;
+  const correct = answers.filter((a,i) => a === QUESTIONS[i].correct).length;
+  const pct = Math.round(correct/total*100);
+  const level = levelFor(pct);
+
+  results[currentTheme] = {
+    correct, total, pct, level, ts: Date.now(),
+    answers: answers.slice(),
+    questions: QUESTIONS.slice()
+  };
+
+  document.getElementById('headerRight').textContent = consultantName.toUpperCase() + ' · ' + THEMES[currentTheme].label;
+
+  document.getElementById('resultBadgeWrap').innerHTML =
+    '<div class="result-badge" style="background:'+level.color+'22; color:'+level.color+'; border:1px solid '+level.color+'66;">● Niveau : '+level.name+'</div>';
+  document.getElementById('scoreBig').textContent = correct + ' / ' + total;
+  document.getElementById('scoreSub').textContent = pct + '% de bonnes réponses — ' + consultantName + ' · ' + THEMES[currentTheme].label;
+
+  const scaleRow = document.getElementById('scaleRow');
+  scaleRow.innerHTML = '';
+  LEVELS.slice().reverse().forEach(l => {
+    const chip = document.createElement('div');
+    chip.className = 'scale-chip' + (l.name === level.name ? ' active' : '');
+    chip.style.background = l.color;
+    chip.style.color = (l.name === 'Moyen') ? '#3a2a00' : (l.name === 'Bon' ? '#0e2a12' : '#fff');
+    chip.textContent = l.name;
+    scaleRow.appendChild(chip);
+  });
+
+  const reviewList = document.getElementById('reviewList');
+  reviewList.innerHTML = '<div class="field-label" style="margin-bottom:10px;">Détail des réponses</div>';
+  QUESTIONS.forEach((item, i) => {
+    const ok = answers[i] === item.correct;
+    const div = document.createElement('div');
+    div.className = 'review-item' + (ok ? '' : ' wrong');
+    div.innerHTML =
+      '<div class="q"><span class="badge-mini ' + (ok?'ok':'ko') + '">' + (ok?'OK':'KO') + '</span>' + (i+1) + '. ' + item.q + '</div>' +
+      '<div class="a">Réponse correcte : <b>' + item.options[item.correct] + '</b>' +
+      (ok ? '' : ' — votre réponse : ' + (answers[i]===null?'(sans réponse)':item.options[answers[i]])) +
+      '</div>';
+    reviewList.appendChild(div);
+  });
+
+  showScreen('screen-theme-result');
+}
+
+document.getElementById('backToThemesBtn').addEventListener('click', () => {
+  document.getElementById('headerRight').textContent = consultantName.toUpperCase();
+  renderThemeGrid();
+  showScreen('screen-themes');
+});
+document.getElementById('goFinalBtn').addEventListener('click', showFinalSummary);
+document.getElementById('continueSessionBtn').addEventListener('click', () => {
+  document.getElementById('headerRight').textContent = consultantName.toUpperCase();
+  renderThemeGrid();
+  showScreen('screen-themes');
+});
+
+// ---------- FINAL SUMMARY SCREEN ----------
+function showFinalSummary(){
+  document.getElementById('headerRight').textContent = consultantName.toUpperCase() + ' · RÉCAPITULATIF';
+  const doneKeys = Object.keys(results);
+  document.getElementById('finalSub').textContent =
+    consultantName + ' — ' + doneKeys.length + ' thématique' + (doneKeys.length > 1 ? 's' : '') + ' évaluée' + (doneKeys.length > 1 ? 's' : '') + ' dans cette session.';
+
+  const tbody = document.getElementById('finalTableBody');
+  tbody.innerHTML = '';
+  doneKeys.forEach(key => {
+    const r = results[key];
+    const tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td class="theme-name">' + THEMES[key].label + '</td>' +
+      '<td>' + r.correct + '/' + r.total + ' (' + r.pct + '%)</td>' +
+      '<td class="level-cell" style="color:' + r.level.color + ';">● ' + r.level.name + '</td>';
+    tbody.appendChild(tr);
+  });
+
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('fr-FR') + ' ' + now.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+  let summary = `Résultat quiz TMA\nConsultant : ${consultantName}\nDate : ${dateStr}\n`;
+  doneKeys.forEach(key => {
+    const r = results[key];
+    summary += `${THEMES[key].label} : ${r.correct}/${r.total} (${r.pct}%) — Niveau à reporter : ${r.level.name}\n`;
+  });
+  document.getElementById('summaryBox').textContent = summary.trim();
+
+  document.getElementById('copyBtn').onclick = () => {
+    navigator.clipboard.writeText(summary.trim()).then(() => {
+      const flag = document.getElementById('copiedFlag');
+      flag.classList.add('show');
+      setTimeout(() => flag.classList.remove('show'), 1600);
+    });
+  };
+
+  document.getElementById('pdfBtn').onclick = () => generatePDF(doneKeys, dateStr);
+  saveResults(doneKeys);
+
+  showScreen('screen-final');
+}
+
+// ---------- PARTAGE : base de résultats & téléchargement ----------
+let _db = undefined;
+async function getDb(){
+  if(_db !== undefined) return _db;
+  try { _db = (window.claude && window.claude.use) ? await window.claude.use('db') : null; } catch(e){ _db = null; }
+  return _db;
+}
+async function saveFile(filename, data, fallback){
+  try {
+    const dl = (window.claude && window.claude.use) ? await window.claude.use('downloads') : null;
+    if(dl){ await dl.save({ filename, data }); return; }
+  } catch(e){ if(e && e.code === 'declined') return; }
+  fallback && fallback();
+}
+const savedStamps = {};
+async function saveResults(keys){
+  const st = document.getElementById('saveStatus');
+  const db = await getDb();
+  if(!db){ st.textContent = "Enregistrement équipe indisponible (ouvrez le lien partagé pour centraliser les résultats)."; return; }
+  const pending = keys.filter(k => savedStamps[k] !== results[k].ts);
+  try {
+    for(const k of pending){
+      const r = results[k];
+      await db.collection('results').add({
+        consultant: consultantName, theme: k, correct: r.correct, total: r.total,
+        pct: r.pct, level: r.level.name, ts: r.ts, date: new Date(r.ts).toISOString()
+      });
+      savedStamps[k] = r.ts;
+    }
+    st.textContent = '✓ Résultats enregistrés pour l\'équipe.';
+  } catch(e){ st.textContent = "Échec de l'enregistrement : " + ((e && e.message) || 'erreur') + " (droits d'écriture requis)."; }
+}
+let teamRows = [];
+async function loadTeam(){
+  const sub = document.getElementById('teamSub');
+  const db = await getDb();
+  const head = document.getElementById('teamHead'), body = document.getElementById('teamBody');
+  head.innerHTML = ''; body.innerHTML = ''; document.getElementById('histHead').innerHTML = ''; document.getElementById('histBody').innerHTML = '';
+  if(!db){ sub.textContent = 'Base de résultats indisponible dans ce mode d\'ouverture.'; return; }
+  try {
+    const snap = await db.collection('results').get();
+    teamRows = snap.docs.map(d => d.data()).sort((a,b) => (b.ts||0) - (a.ts||0));
+  } catch(e){ sub.textContent = 'Lecture impossible : ' + ((e && e.message) || 'erreur'); return; }
+  sub.textContent = teamRows.length + ' résultat(s) enregistré(s) — dernier niveau obtenu par consultant et thématique.';
+  const keys = Object.keys(THEMES);
+  const trh = document.createElement('tr');
+  ['Consultant', ...keys.map(k => THEMES[k].label)].forEach(t => { const th = document.createElement('th'); th.textContent = t; trh.appendChild(th); });
+  head.appendChild(trh);
+  const names = [...new Set(teamRows.map(r => r.consultant))].sort();
+  names.forEach(n => {
+    const tr = document.createElement('tr');
+    const td0 = document.createElement('td'); td0.textContent = n; td0.style.fontWeight = '600'; tr.appendChild(td0);
+    keys.forEach(k => {
+      const td = document.createElement('td');
+      const last = teamRows.find(r => r.consultant === n && r.theme === k);
+      if(last){
+        const lv = LEVELS.find(l => l.name === last.level) || LEVELS[4];
+        const s = document.createElement('span'); s.className = 'lvl-pill';
+        s.style.background = lv.color + '33'; s.style.color = lv.color; s.style.border = '1px solid ' + lv.color + '88';
+        s.textContent = last.level + ' · ' + last.pct + '%'; td.appendChild(s);
+        const dt = document.createElement('div'); dt.style.cssText = 'font-size:11px;color:var(--muted);margin-top:4px;font-family:IBM Plex Mono,monospace;'; dt.textContent = fmtDate(last.ts); td.appendChild(dt);
+      } else { td.textContent = '—'; td.style.color = 'var(--muted)'; }
+      tr.appendChild(td);
+    });
+    body.appendChild(tr);
+  });
+  const hh = document.createElement('tr');
+  ['Date et heure','Consultant','Thématique','Score','Niveau'].forEach(t => { const th = document.createElement('th'); th.textContent = t; hh.appendChild(th); });
+  document.getElementById('histHead').appendChild(hh);
+  teamRows.forEach(r => {
+    const tr = document.createElement('tr');
+    const lv = LEVELS.find(l => l.name === r.level) || LEVELS[4];
+    [fmtDate(r.ts), r.consultant, r.theme, r.correct + '/' + r.total + ' (' + r.pct + '%)', r.level].forEach((v, i) => {
+      const td = document.createElement('td'); td.textContent = v;
+      if(i === 4){ td.style.color = lv.color; td.style.fontWeight = '600'; }
+      tr.appendChild(td);
+    });
+    document.getElementById('histBody').appendChild(tr);
+  });
+}
+function fmtDate(ts){ return ts ? new Date(ts).toLocaleString('fr-FR', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'}) : '—'; }
+document.getElementById('teamBtn').addEventListener('click', () => { showScreen('screen-team'); loadTeam(); });
+document.getElementById('teamBackBtn').addEventListener('click', () => showScreen(consultantName ? 'screen-themes' : 'screen-start'));
+document.getElementById('teamRefreshBtn').addEventListener('click', loadTeam);
+document.getElementById('teamCsvBtn').addEventListener('click', () => {
+  const lines = ['Consultant;Thématique;Score;Pourcentage;Niveau;Date'];
+  teamRows.slice().sort((a,b) => (a.ts||0)-(b.ts||0)).forEach(r =>
+    lines.push([r.consultant, r.theme, r.correct + '/' + r.total, r.pct + '%', r.level, fmtDate(r.ts)].join(';')));
+  saveFile('Resultats_Quiz_TMA.csv', '\ufeff' + lines.join('\n'));
+});
+
+// ---------- PDF REPORT ----------
+function hexToRgb(hex){
+  const h = hex.replace('#','');
+  return [parseInt(h.substring(0,2),16), parseInt(h.substring(2,4),16), parseInt(h.substring(4,6),16)];
+}
+
+function generatePDF(doneKeys, dateStr){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const marginX = 18;
+
+  // Header band
+  doc.setFillColor(18, 27, 46);
+  doc.rect(0, 0, pageWidth, 32, 'F');
+  doc.setTextColor(255,255,255);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(16);
+  doc.text('Compte-rendu — Quiz de connaissances TMA', marginX, 14);
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(10);
+  doc.setTextColor(180, 200, 220);
+  doc.text('Matrice de compétences — résultats par thématique', marginX, 21);
+
+  // Consultant / date block
+  doc.setTextColor(30,30,30);
+  doc.setFontSize(11);
+  doc.setFont('helvetica','bold');
+  doc.text('Consultant :', marginX, 42);
+  doc.setFont('helvetica','normal');
+  doc.text(consultantName, marginX + 28, 42);
+
+  doc.setFont('helvetica','bold');
+  doc.text('Date du quiz :', marginX, 49);
+  doc.setFont('helvetica','normal');
+  doc.text(dateStr, marginX + 28, 49);
+
+  doc.setFont('helvetica','bold');
+  doc.text('Thématiques évaluées :', marginX, 56);
+  doc.setFont('helvetica','normal');
+  doc.text(String(doneKeys.length), marginX + 45, 56);
+
+  // Results table
+  const rows = doneKeys.map(key => {
+    const r = results[key];
+    return [THEMES[key].label, r.correct + '/' + r.total, r.pct + '%', r.level.name];
+  });
+
+  doc.autoTable({
+    startY: 64,
+    margin: { left: marginX, right: marginX },
+    head: [['Thématique', 'Score', 'Pourcentage', 'Niveau']],
+    body: rows,
+    theme: 'grid',
+    headStyles: { fillColor: [18,27,46], textColor: [255,255,255], fontStyle: 'bold' },
+    styles: { font: 'helvetica', fontSize: 11, cellPadding: 4, valign: 'middle' },
+    columnStyles: { 0: { fontStyle: 'bold' } },
+    didParseCell: function(data){
+      if(data.section === 'body' && data.column.index === 3){
+        const key = doneKeys[data.row.index];
+        const lvl = results[key].level;
+        const rgb = hexToRgb(lvl.color);
+        data.cell.styles.fillColor = rgb;
+        data.cell.styles.textColor = (lvl.name === 'Moyen' || lvl.name === 'Bon') ? [30,30,30] : [255,255,255];
+        data.cell.styles.fontStyle = 'bold';
+      }
+    }
+  });
+
+  let y = doc.lastAutoTable.finalY + 12;
+
+  // Legend / scale
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(10);
+  doc.setTextColor(30,30,30);
+  doc.text('Échelle de référence', marginX, y);
+  y += 6;
+  let x = marginX;
+  LEVELS.slice().reverse().forEach(l => {
+    const rgb = hexToRgb(l.color);
+    doc.setFillColor(rgb[0], rgb[1], rgb[2]);
+    doc.roundedRect(x, y - 4, 30, 7, 1, 1, 'F');
+    doc.setFontSize(8.5);
+    doc.setTextColor((l.name === 'Moyen' || l.name === 'Bon') ? 30 : 255);
+    doc.text(l.name, x + 15, y, { align: 'center' });
+    x += 33;
+  });
+  y += 14;
+
+  // Per-theme detail (missed questions summary)
+  doc.setTextColor(30,30,30);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(11);
+  doc.text('Détail par thématique', marginX, y);
+  y += 7;
+
+  doneKeys.forEach(key => {
+    const r = results[key];
+    if(y > 265){ doc.addPage(); y = 20; }
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(10.5);
+    doc.setTextColor(30,30,30);
+    doc.text(THEMES[key].label + ' — ' + r.correct + '/' + r.total + ' (' + r.pct + '%) — Niveau : ' + r.level.name, marginX, y);
+    y += 5;
+
+    const wrong = r.questions.map((q,i) => ({q, i})).filter(o => r.answers[o.i] !== o.q.correct);
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(9);
+    doc.setTextColor(90,90,90);
+    if(wrong.length === 0){
+      doc.text('Toutes les réponses de cette thématique sont correctes.', marginX + 2, y);
+      y += 6;
+    } else {
+      doc.text(wrong.length + ' question(s) à revoir sur ' + THEMES[key].label + ' :', marginX + 2, y);
+      y += 5;
+      wrong.forEach(o => {
+        if(y > 275){ doc.addPage(); y = 20; }
+        const lines = doc.splitTextToSize('• ' + o.q.q, pageWidth - marginX*2 - 4);
+        doc.text(lines, marginX + 4, y);
+        y += lines.length * 4.5;
+      });
+      y += 3;
+    }
+    y += 3;
+  });
+
+  // Footer note
+  const pageCount = doc.internal.getNumberOfPages();
+  for(let p = 1; p <= pageCount; p++){
+    doc.setPage(p);
+    doc.setFont('helvetica','italic');
+    doc.setFontSize(8);
+    doc.setTextColor(140,140,140);
+    doc.text('Généré automatiquement par le Quiz TMA — à joindre à Matrice_de_competences.xlsx', marginX, 290);
+    doc.text(String(p) + ' / ' + pageCount, pageWidth - marginX, 290, { align: 'right' });
+  }
+
+  const fileConsultant = consultantName.replace(/[^a-zA-Z0-9]+/g, '_');
+  const fileDate = new Date().toISOString().slice(0,10);
+  const fname = 'Quiz_TMA_' + fileConsultant + '_' + fileDate + '.pdf';
+  saveFile(fname, doc.output('blob'), () => doc.save(fname));
+}
+</script>
+</body>
+</html>
